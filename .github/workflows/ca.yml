@@ -39,7 +39,7 @@ jobs:
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: .
+        publish_dir: ./ca
         keep_files: true
         allow_empty_commit: true
         user_name: 'github-actions[bot]'
