@@ -1,0 +1,14 @@
+*.log
+*.tmp
+*.temp
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tar.gz
+*.zip
+*.tar.xz
+dist/
+build/
+out/
+.env
