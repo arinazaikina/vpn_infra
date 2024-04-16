@@ -1,0 +1,47 @@
+name: Build and Deploy CA Package
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'ca/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'ca/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup dependencies
+      run: sudo apt-get update && sudo apt-get install -y dpkg-dev debhelper
+
+    - name: Build DEB Package
+      run: |
+        cd ca
+        dpkg-buildpackage -us -uc -b
+
+    - name: Upload DEB Package
+      uses: actions/upload-artifact@v2
+      with:
+        name: deb-package
+        path: ../*.deb
+
+
+    - name: Deploy DEB Package to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .
+        keep_files: true
+        allow_empty_commit: true
+        user_name: 'github-actions[bot]'
+        user_email: 'github-actions[bot]@users.noreply.github.com'
+        commit_message: 'Deploy Debian package to GitHub Pages'
