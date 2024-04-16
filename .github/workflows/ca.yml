@@ -25,24 +25,33 @@ jobs:
     - name: Upload DEB Package
       uses: actions/upload-artifact@v2
       with:
-        name: deb-package
+        name: ca-deb-package
         path: '*.deb'
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download DEB Package
+        uses: actions/download-artifact@v2
+        with:
+          name: ca-deb-package
+          path: ca-deb-package
 
-    - name: Checkout repository for DEB packages
-      uses: actions/checkout@v2
-      with:
-        repository: 'arinazaikina/azaikina-deb-repo'
-        token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
-        path: 'deb-repo'
+      - name: Checkout repository for DEB packages
+        uses: actions/checkout@v2
+        with:
+          repository: 'arinazaikina/azaikina-deb-repo'
+          token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
+          path: 'deb-repo'
 
-    - name: Copy DEB Package to Repository
-      run: |
-        cp *.deb ./deb-repo/ca/ 
+      - name: Copy DEB Package to Repository
+        run: |
+          cp ca-deb-package/*.deb ./deb-repo/ca/
 
-    - name: Commit and Push DEB Package
-      run: |
-        cd deb-repo
-        git add .
-        git commit -m "Update DEB packages" || echo "No changes to commit"
-        git push --set-upstream origin main
+      - name: Commit and Push DEB Package
+        run: |
+          cd deb-repo
+          git add .
+          git commit -m "Update DEB packages" || echo "No changes to commit"
+          git push
