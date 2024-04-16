@@ -11,8 +11,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
       - name: Setup dependencies
         run: sudo apt-get update && sudo apt-get install -y dpkg-dev debhelper
@@ -34,9 +33,14 @@ jobs:
         run: |
           cp *.deb ./deb-repo/ca/
 
+      - name: Setup Git config
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
       - name: Commit and Push DEB Package
         run: |
           cd deb-repo
           git add .
-          git commit -m "Update DEB packages" || echo "No changes to commit"
+          git diff --staged --exit-code || git commit -m "Update DEB packages"
           git push --set-upstream origin main
