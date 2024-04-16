@@ -41,8 +41,10 @@ jobs:
         cp *.deb ./deb-repo/ca/ 
 
     - name: Commit and Push DEB Package
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
-        directory: 'deb-repo'
-        branch: 'main'
+      run: |
+        cd deb-repo
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'actions@github.com'
+        git add .
+        git commit -m "Update DEB packages" || echo "No changes to commit"
+        git push --set-upstream origin main
