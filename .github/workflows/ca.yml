@@ -38,7 +38,7 @@ jobs:
 
     - name: Copy DEB Package to Repository
       run: |
-        cp ../*.deb ./deb-repo/ca/ 
+        cp *.deb ./deb-repo/ca/ 
 
     - name: Commit and Push DEB Package
       uses: ad-m/github-push-action@master
