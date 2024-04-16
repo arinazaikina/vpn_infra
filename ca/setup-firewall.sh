@@ -38,4 +38,4 @@ done
 # Сохранение изменённых правил iptables
 iptables-save > /etc/iptables/rules.v4
 
-echo "Новые правила iptables применены и сохранены."
+echo "Новые правила iptables применены и сохранены"
