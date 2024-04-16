@@ -32,7 +32,7 @@ jobs:
     - name: Checkout repository for DEB packages
       uses: actions/checkout@v2
       with:
-        repository: 'username/azaikina-deb-repo'
+        repository: 'azaikina/azaikina-deb-repo'
         token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
         path: 'deb-repo'
 
