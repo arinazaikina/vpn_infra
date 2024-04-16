@@ -6,11 +6,6 @@ on:
       - main
     paths:
       - 'ca/**'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'ca/**'
 
 jobs:
   build:
@@ -31,17 +26,23 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: deb-package
-        path: ./*.deb
+        path: '*.deb'
 
 
-    - name: Deploy DEB Package to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      if: github.ref == 'refs/heads/main'
+    - name: Checkout repository for DEB packages
+      uses: actions/checkout@v2
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./ca
-        keep_files: true
-        allow_empty_commit: true
-        user_name: 'github-actions[bot]'
-        user_email: 'github-actions[bot]@users.noreply.github.com'
-        commit_message: 'Deploy Debian package to GitHub Pages'
+        repository: 'username/azaikina-deb-repo'
+        token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
+        path: 'deb-repo'
+
+    - name: Copy DEB Package to Repository
+      run: |
+        cp ../*.deb ./deb-repo/ca/ 
+
+    - name: Commit and Push DEB Package
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
+        directory: 'deb-repo'
+        branch: 'main'
