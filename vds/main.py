@@ -1,13 +1,14 @@
 import concurrent.futures
 import os
 
-from vds.servers import Servers
+from servers import Servers
+from vars import SSH_PUBLIC_KEY_PATH, SSH_PRIVATE_KEY_PATH, USER
 
 
 def main():
     servers_config = [
-        ("CA", 1, 11, 15),
-        ("VPN-server", 1, 11, 15)
+        ("CA", 1, 11, 15)
+        # ("VPN-server", 1, 11, 15)
         # ("Monitoring", 1, 11, 15),
         # ("Backup", 1, 11, 15)
     ]
@@ -40,6 +41,12 @@ def write_inventory(ips):
     os.makedirs(inventory_path, exist_ok=True)
 
     with open(hosts_file_path, 'w') as f:
+        f.write("[all:vars]\n")
+        f.write(f"ansible_ssh_user=root\n")
+        f.write(f"new_user={USER}\n")
+        f.write(f"ansible_ssh_private_key_file={SSH_PRIVATE_KEY_PATH}\n")
+        f.write(f"ansible_ssh_public_key_file={SSH_PUBLIC_KEY_PATH}\n")
+        f.write("ansible_ssh_common_args='-o StrictHostKeyChecking=no -o IdentitiesOnly=yes'\n\n")
         for name, ip in ips.items():
             f.write(f"[{name}]\n")
             f.write(f"{ip}\n\n")

@@ -1,13 +1,14 @@
 import os
 
-from vds.client import Client
+from client import Client
+from vars import SSH_KEY_NAME
 
 
 class SSHKeys:
 
     def __init__(self) -> None:
         self.session = Client()
-        self.key_name = 'VDSina_key'
+        self.key_name = SSH_KEY_NAME
         self.public_key_path = os.path.expanduser(f'~/.ssh/{self.key_name}.pub')
         self.private_key_path = os.path.expanduser(f'~/.ssh/{self.key_name}')
 

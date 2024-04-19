@@ -1,7 +1,7 @@
 import requests
 
-from vds.endpoints import ApiEndpoints
-from vds.vars import API_TOKEN, BASE_URL
+from endpoints import ApiEndpoints
+from vars import API_TOKEN, BASE_URL
 
 
 class Client:

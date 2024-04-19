@@ -1,5 +1,10 @@
+[all:vars]
+ansible_ssh_user=arina
+new_user=arina
+ansible_ssh_private_key_file=/home/arina/.ssh/VDSina_key
+ansible_ssh_public_key_file=/home/arina/.ssh/VDSina_key.pub
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o IdentitiesOnly=yes'
+
 [CA]
 77.238.248.47
 
-[VPN-server]
-89.110.67.206

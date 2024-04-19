@@ -1,0 +1,39 @@
+---
+- name: Настройка начального пользователя
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Создание пользователя
+      user:
+        name: "{{ new_user }}"
+        shell: /bin/bash
+        password: "{{ 'defaultpassword' | password_hash('sha512') }}"
+        create_home: yes
+
+    - name: Установка SSH ключа для пользователя
+      authorized_key:
+        user: "{{ new_user }}"
+        state: present
+        key: "{{ lookup('file', ansible_ssh_public_key_file) }}"
+
+    - name: Отключение SSH для root пользователя
+      lineinfile:
+        path: /etc/ssh/sshd_config.d/50-cloud-init.conf
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+      notify: restart sshd
+
+    - name: Настройка sudo для нового пользователя без пароля
+      lineinfile:
+        path: /etc/sudoers.d/90-init-users
+        line: "{{ new_user }} ALL=(ALL) NOPASSWD: ALL"
+        create: yes
+        validate: 'visudo -cf %s'
+
+  handlers:
+    - name: restart sshd
+      systemd:
+        name: ssh
+        state: restarted

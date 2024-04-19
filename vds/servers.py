@@ -1,7 +1,7 @@
 import time
 
-from vds.client import Client
-from vds.ssh_keys import SSHKeys
+from client import Client
+from ssh_keys import SSHKeys
 
 
 class Servers:
