@@ -13,3 +13,4 @@ build/
 out/
 .env
 venv/
+ansible/inventory/hosts
