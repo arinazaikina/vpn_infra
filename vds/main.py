@@ -7,8 +7,8 @@ from vars import SSH_PUBLIC_KEY_PATH, SSH_PRIVATE_KEY_PATH, USER
 
 def main():
     servers_config = [
-        ("CA", 1, 11, 15)
-        # ("VPN-server", 1, 11, 15)
+        ("CA", 1, 11, 15),
+        ("VPN-server", 1, 11, 15)
         # ("Monitoring", 1, 11, 15),
         # ("Backup", 1, 11, 15)
     ]

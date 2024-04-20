@@ -14,3 +14,4 @@ out/
 .env
 venv/
 ansible/inventory/hosts
+ansible/playbook/pub_keys/
