@@ -1,14 +1,16 @@
 import concurrent.futures
 import os
 
+import requests
+
 from servers import Servers
 from vars import SSH_PUBLIC_KEY_PATH, SSH_PRIVATE_KEY_PATH, USER
 
 
-def main():
+def create_servers():
     servers_config = [
         ("CA", 1, 11, 15),
-        ("VPN-server", 1, 11, 15)
+        ("VPN", 1, 11, 15)
         # ("Monitoring", 1, 11, 15),
         # ("Backup", 1, 11, 15)
     ]
@@ -32,6 +34,15 @@ def main():
     return server_data
 
 
+def get_public_ip():
+    try:
+        response = requests.get('https://api.ipify.org')
+        public_ip = response.text
+    except requests.RequestException:
+        public_ip = '127.0.0.1'
+    return public_ip
+
+
 def write_inventory(ips):
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -39,6 +50,7 @@ def write_inventory(ips):
     hosts_file_path = os.path.join(inventory_path, 'hosts')
 
     os.makedirs(inventory_path, exist_ok=True)
+    public_ip = get_public_ip()
 
     with open(hosts_file_path, 'w') as f:
         f.write("[all:vars]\n")
@@ -46,7 +58,8 @@ def write_inventory(ips):
         f.write(f"new_user={USER}\n")
         f.write(f"ansible_ssh_private_key_file={SSH_PRIVATE_KEY_PATH}\n")
         f.write(f"ansible_ssh_public_key_file={SSH_PUBLIC_KEY_PATH}\n")
-        f.write("ansible_ssh_common_args='-o StrictHostKeyChecking=no -o IdentitiesOnly=yes'\n\n")
+        f.write("ansible_ssh_common_args='-o StrictHostKeyChecking=no -o IdentitiesOnly=yes'\n")
+        f.write(f"local_host_ip={public_ip}\n\n")
         for name, ip in ips.items():
             f.write(f"[{name}]\n")
             f.write(f"{ip}\n\n")
@@ -55,5 +68,5 @@ def write_inventory(ips):
 
 
 if __name__ == "__main__":
-    server_ips = main()
+    server_ips = create_servers()
     write_inventory(server_ips)

@@ -19,4 +19,7 @@ python vds/ansible_ssh_user.py
 echo "Запуск Ansible playbook для настройки SSH..."
 ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_ssh.yml
 
+echo "Запуск Ansible playbook для настройки firewall..."
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_firewall.yml
+
 echo "Все операции выполнены успешно!"

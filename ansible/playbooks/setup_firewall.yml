@@ -1,0 +1,47 @@
+---
+- hosts: CA
+  become: yes
+  gather_facts: yes
+
+  tasks:
+    - name: Установка пакета iptables-persistent
+      ansible.builtin.apt:
+        name: iptables-persistent
+        state: present
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Настройка правил iptables
+      ansible.builtin.shell: |
+        # Очистка текущих правил
+        iptables -F
+        iptables -t nat -F
+        iptables -t mangle -F
+        iptables -X
+
+        # Установка политик по умолчанию
+        iptables -P INPUT DROP
+        iptables -P FORWARD DROP
+        iptables -P OUTPUT ACCEPT
+
+        # Разрешение локального трафика и установленных соединений
+        iptables -A INPUT -i lo -j ACCEPT
+        iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+        # Разрешение SSH доступа для текущего хоста
+        iptables -A INPUT -p tcp --dport 22 -s {{ local_host_ip }} -j ACCEPT
+
+        # Разрешение SSH доступа для всех хостов в инвентаре по именам
+        {% for host in groups['all'] %}
+        iptables -A INPUT -p tcp --dport 22 -s {{ hostvars[host]['inventory_hostname'] }} -j ACCEPT
+        {% endfor %}
+
+    - name: Сохранение настроек iptables
+      ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4
+
+    - name: Убедиться, что правила iptables будут сохранены после перезагрузки
+      ansible.builtin.shell: dpkg-reconfigure -f noninteractive iptables-persistent
+
+    - name: Вывод сообщения об успешном выполнении
+      ansible.builtin.debug:
+        msg: "Новые правила iptables применены и сохранены."
