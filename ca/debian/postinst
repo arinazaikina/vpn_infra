@@ -1,0 +1,36 @@
+#!/bin/sh
+
+. /usr/share/debconf/confmodule
+
+set -e
+
+case "$1" in
+    configure)
+        db_get ca/ip1
+        LOCAL_IP=$RET
+        db_get ca/ip_list
+        VPN_IPS=$RET
+
+		mkdir -p /etc/myvpn
+
+        # Создание или обновление файла конфигурации с IP-адресами
+        echo "# IP-адрес локальной машины" > /etc/myvpn/ip_addresses.conf
+        echo "LOCAL_IP=$LOCAL_IP" >> /etc/myvpn/ip_addresses.conf
+        echo "# IP-адреса VPN серверов" >> /etc/myvpn/ip_addresses.conf
+        echo "VPN_IPS=$VPN_IPS" >> /etc/myvpn/ip_addresses.conf
+
+        # Запуск скриптов без передачи IP-адресов
+        /usr/bin/setup-firewall.sh
+        /usr/bin/setup-easyrsa-ca.sh
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0
