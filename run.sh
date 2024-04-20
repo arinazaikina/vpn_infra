@@ -4,8 +4,8 @@ set -e
 
 source venv/bin/activate
 
-#echo "Создание виртуальных машин..."
-#python vds/main.py
+echo "Создание виртуальных машин..."
+python vds/main.py
 
 echo "Ожидание 60 секунд..."
 sleep 60
