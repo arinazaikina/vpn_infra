@@ -38,7 +38,6 @@ jobs:
           cat debian/changelog
           git add debian/changelog
           git commit -m "Update changelog to version $NEW_VERSION"
-#          git push
           cd ..
 
       - name: Сборка DEB пакета
