@@ -1,7 +1,15 @@
 #!/bin/bash
 
+# Определение домашней директории пользователя, инициировавшего sudo
+if [ -n "$SUDO_USER" ]; then
+    HOME_USER=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+else
+    # shellcheck disable=SC2034
+    HOME_USER="$HOME"
+fi
+
 # Создание рабочей директории для Easy-RSA и создание в ней символических ссылок
-EASY_RSA_DIR="$HOME/easy-rsa"
+EASY_RSA_DIR="$HOME_USER/easy-rsa"
 mkdir -p "$EASY_RSA_DIR"
 if [ ! -d "/usr/share/easy-rsa/" ]; then
     echo "Каталог /usr/share/easy-rsa/ не найден. Проверьте установку Easy-RSA."
