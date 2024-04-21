@@ -20,7 +20,6 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git config --global http.https://github.com/.extraheader "AUTHORIZATION: bearer ${{ secrets.VPN_INFRA_REPO_ACCESS_TOKEN }}"
 
       - name: Инкрементирование версии и обновление changelog
         env:
@@ -36,8 +35,6 @@ jobs:
           dch --newversion $NEW_VERSION "Automated increment based on new commit."
           dch -r ""
           cat debian/changelog
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
           git add debian/changelog
           git commit -m "Update changelog to version $NEW_VERSION"
           git push
@@ -49,25 +46,25 @@ jobs:
           dpkg-buildpackage -us -uc -b
           cd ..
 
-      - name: Клонирование репозитория DEB пакетов
-        uses: actions/checkout@v2
-        with:
-          repository: 'arinazaikina/azaikina-deb-repo'
-          token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
-          path: 'deb-repo'
-
-      - name: Копирование DEB пакета в репозиторий
-        run: |
-          cp *.deb ./deb-repo/ca/
-
-      - name: Настройка конфигурации Git
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-
-      - name: Фиксация изменений и публикация в репозиторий
-        run: |
-          cd deb-repo
-          git add .
-          git commit -m "Update DEB packages to version $NEW_VERSION."
-          git push --set-upstream origin main
+#      - name: Клонирование репозитория DEB пакетов
+#        uses: actions/checkout@v2
+#        with:
+#          repository: 'arinazaikina/azaikina-deb-repo'
+#          token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
+#          path: 'deb-repo'
+#
+#      - name: Копирование DEB пакета в репозиторий
+#        run: |
+#          cp *.deb ./deb-repo/ca/
+#
+#      - name: Настройка конфигурации Git
+#        run: |
+#          git config --global user.name "GitHub Actions"
+#          git config --global user.email "actions@github.com"
+#
+#      - name: Фиксация изменений и публикация в репозиторий
+#        run: |
+#          cd deb-repo
+#          git add .
+#          git commit -m "Update DEB packages to version $NEW_VERSION."
+#          git push --set-upstream origin main
