@@ -35,6 +35,9 @@ jobs:
           dch --newversion $NEW_VERSION "Automated increment based on new commit."
           dch -r ""
           cat debian/changelog
+          git add debian/changelog
+          git commit -m "Update changelog to version $NEW_VERSION"
+          git push
           cd ..
 
       - name: Сборка DEB пакета
