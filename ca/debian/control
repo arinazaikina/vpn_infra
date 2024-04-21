@@ -8,7 +8,7 @@ Rules-Requires-Root: no
 
 Package: ca
 Architecture: all
-Depends: bash, iptables, iptables-persistent, easy-rsa
+Depends: easy-rsa
 Description: Easy-RSA CA management scripts
  CA (Certificate Authority) management utility scripts to handle
  PKI infrastructure. This package provides tools to manage the

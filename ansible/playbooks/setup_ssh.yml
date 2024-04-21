@@ -1,0 +1,98 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Обновление пакетов
+      apt:
+        update_cache: yes
+
+    - name: Установка необходимых пакетов для SSH
+      apt:
+        name: openssh-server
+        state: latest
+
+    - name: Очистка файла known_hosts
+      known_hosts:
+        path: "/home/{{ ansible_ssh_user }}/.ssh/known_hosts"
+        name: "{{ item }}"
+        state: absent
+      loop: "{{ groups['all'] }}"
+
+    - name: Отключение аутентификации по паролю
+      lineinfile:
+        path: /etc/ssh/sshd_config.d/50-cloud-init.conf
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        state: present
+      notify: restart sshd
+
+    - name: Включение аутентификации по RSA ключам
+      lineinfile:
+        path: /etc/ssh/sshd_config.d/50-cloud-init.conf
+        regexp: '^#?RSAAuthentication'
+        line: 'RSAAuthentication yes'
+        state: present
+
+    - name: Включение аутентификации по публичным ключам
+      lineinfile:
+        path: /etc/ssh/sshd_config.d/50-cloud-init.conf
+        regexp: '^#?PubkeyAuthentication'
+        line: 'PubkeyAuthentication yes'
+        state: present
+
+    - name: Указание файла для хранения авторизованных ключей
+      lineinfile:
+        path: /etc/ssh/sshd_config.d/50-cloud-init.conf
+        regexp: '^#?AuthorizedKeysFile'
+        line: 'AuthorizedKeysFile .ssh/authorized_keys'
+        state: present
+
+    - name: Генерация SSH ключей для каждой машины
+      openssh_keypair:
+        path: "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ group_names[0] }}"
+        type: rsa
+        size: 4096
+        comment: "{{ group_names[0] }}"
+        force: no
+      register: ssh_key_gen
+
+    - name: Сбор публичных ключей всех машин
+      fetch:
+        src: "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ group_names[0] }}.pub"
+        dest: "./pub_keys/id_rsa_{{ group_names[0] }}.pub"
+        flat: yes
+
+    - name: Распределение публичных ключей на все машины
+      authorized_key:
+        user: "{{ ansible_ssh_user }}"
+        state: present
+        key: "{{ lookup('file', item) }}"
+      with_fileglob:
+        - "pub_keys/*.pub"
+
+    - name: Установка правильных прав доступа для SSH ключей
+      file:
+        path: "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ group_names[0] }}"
+        owner: "{{ ansible_ssh_user }}"
+        group: "{{ ansible_ssh_user }}"
+        mode: '0600'
+
+    - name: Добавление SSH ключа в агент
+      shell: |
+        eval "$(ssh-agent -s)"
+        ssh-add /home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ group_names[0] }}
+      args:
+        executable: /bin/bash
+
+    - name: Настройка файла конфигурации SSH для других узлов
+      lineinfile:
+        path: "/home/{{ ansible_ssh_user }}/.ssh/config"
+        line: "Host {{ item }}\n\tUser {{ ansible_ssh_user }}\n\tIdentityFile /home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ group_names[0] }}"
+        create: yes
+      loop: "{{ groups['all'] | reject('eq', inventory_hostname) | list }}"
+
+  handlers:
+    - name: restart sshd
+      systemd:
+        name: ssh
+        state: restarted

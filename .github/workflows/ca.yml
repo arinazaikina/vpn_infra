@@ -1,4 +1,4 @@
-name: Build and Deploy CA Package
+name: Сборка и развертывание пакета CA
 
 on:
   push:
@@ -13,39 +13,50 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup dependencies
+      - name: Установка Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Установка зависимостей для сборки DEB пакета
         run: sudo apt-get update && sudo apt-get install -y dpkg-dev debhelper devscripts
 
-      - name: Update changelog
+      - name: Автоматическое версионирование и обновление changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_AUTHOR_EMAIL: 'actions@github.com'
+          GIT_AUTHOR_NAME: 'GitHub Actions'
+          GIT_COMMITTER_EMAIL: 'actions@github.com'
+          GIT_COMMITTER_NAME: 'GitHub Actions'
+        run: |
+          npm install -g semantic-release @semantic-release/changelog @semantic-release/git
+          semantic-release --prepareCmd "cd ca && dch --newversion \${nextRelease.version}-1 'Автоматизированная сборка и релиз на основе семантического версионирования.' && cd .."
+
+      - name: Сборка DEB пакета
         run: |
           cd ca
-          DEBEMAIL="actions@github.com" DEBFULLNAME="GitHub Actions" dch --newversion $(date +%Y.%m.%d.%H%M%S)-1 "Automated build based on new commit."
-          cat debian/changelog
-
-      - name: Build DEB Package
-        run: |
           dpkg-buildpackage -us -uc -b
           cd ..
 
-      - name: Checkout repository for DEB packages
+      - name: Клонирование репозитория DEB пакетов
         uses: actions/checkout@v2
         with:
           repository: 'arinazaikina/azaikina-deb-repo'
           token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
           path: 'deb-repo'
 
-      - name: Copy DEB Package to Repository
+      - name: Копирование DEB пакета в репозиторий
         run: |
           cp ../*.deb ./deb-repo/ca/
 
-      - name: Setup Git config
+      - name: Настройка конфигурации Git
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      - name: Commit and Push DEB Package
+      - name: Фиксация изменений и публикация в репозиторий
         run: |
           cd deb-repo
           git add .
-          git commit -m "Update DEB packages with new version $(date +%Y.%m.%d.%H%M%S)"
+          git commit -m "Обновление DEB пакетов с новой версией."
           git push --set-upstream origin main
