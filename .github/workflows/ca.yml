@@ -25,7 +25,6 @@ jobs:
         env:
           DEBEMAIL: "actions@github.com"
           DEBFULLNAME: "GitHub Actions"
-          MY_PAT: ${{ secrets.VPN_INFRA_REPO_ACCESS_TOKEN }}
         run: |
           cd ca
           CURRENT_VERSION=$(dpkg-parsechangelog --show-field Version)
@@ -38,6 +37,7 @@ jobs:
           cat debian/changelog
           git add debian/changelog
           git commit -m "Update changelog to version $NEW_VERSION"
+          git push
           cd ..
 
       - name: Сборка DEB пакета
