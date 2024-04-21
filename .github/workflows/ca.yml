@@ -25,6 +25,7 @@ jobs:
         env:
           DEBEMAIL: "actions@github.com"
           DEBFULLNAME: "GitHub Actions"
+          MY_PAT: ${{ secrets.VPN_INFRA_REPO_ACCESS_TOKEN }}
         run: |
           cd ca
           CURRENT_VERSION=$(dpkg-parsechangelog --show-field Version)
@@ -46,25 +47,25 @@ jobs:
           dpkg-buildpackage -us -uc -b
           cd ..
 
-#      - name: Клонирование репозитория DEB пакетов
-#        uses: actions/checkout@v2
-#        with:
-#          repository: 'arinazaikina/azaikina-deb-repo'
-#          token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
-#          path: 'deb-repo'
-#
-#      - name: Копирование DEB пакета в репозиторий
-#        run: |
-#          cp *.deb ./deb-repo/ca/
-#
-#      - name: Настройка конфигурации Git
-#        run: |
-#          git config --global user.name "GitHub Actions"
-#          git config --global user.email "actions@github.com"
-#
-#      - name: Фиксация изменений и публикация в репозиторий
-#        run: |
-#          cd deb-repo
-#          git add .
-#          git commit -m "Update DEB packages to version $NEW_VERSION."
-#          git push --set-upstream origin main
+      - name: Клонирование репозитория DEB пакетов
+        uses: actions/checkout@v2
+        with:
+          repository: 'arinazaikina/azaikina-deb-repo'
+          token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
+          path: 'deb-repo'
+
+      - name: Копирование DEB пакета в репозиторий
+        run: |
+          cp *.deb ./deb-repo/ca/
+
+      - name: Настройка конфигурации Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Фиксация изменений и публикация в репозиторий
+        run: |
+          cd deb-repo
+          git add .
+          git commit -m "Update DEB packages to version $NEW_VERSION."
+          git push --set-upstream origin main
