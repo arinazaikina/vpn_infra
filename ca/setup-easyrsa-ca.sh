@@ -1,9 +1,13 @@
 #!/bin/bash
 
 # Создание рабочей директории для Easy-RSA и создание в ней символических ссылок
-EASY_RSA_DIR=~/easy-rsa
+EASY_RSA_DIR="$HOME/easy-rsa"
 mkdir -p "$EASY_RSA_DIR"
-ln -s /usr/share/easy-rsa/* "$EASY_RSA_DIR/"
+if [ ! -d "/usr/share/easy-rsa/" ]; then
+    echo "Каталог /usr/share/easy-rsa/ не найден. Проверьте установку Easy-RSA."
+    exit 1
+fi
+ln -sf /usr/share/easy-rsa/* "$EASY_RSA_DIR/"
 
 # Установка прав доступа
 chmod 700 "$EASY_RSA_DIR"
