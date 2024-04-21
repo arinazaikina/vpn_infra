@@ -13,24 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Установка Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '20'
-
       - name: Установка зависимостей для сборки DEB пакета
         run: sudo apt-get update && sudo apt-get install -y dpkg-dev debhelper devscripts
 
-      - name: Автоматическое версионирование и обновление changelog
-        env:
-          GITHUB_TOKEN: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
-          GIT_AUTHOR_EMAIL: 'actions@github.com'
-          GIT_AUTHOR_NAME: 'GitHub Actions'
-          GIT_COMMITTER_EMAIL: 'actions@github.com'
-          GIT_COMMITTER_NAME: 'GitHub Actions'
+      - name: Инкрементирование версии и обновление changelog
         run: |
-          npm install -g semantic-release @semantic-release/changelog @semantic-release/git
-          semantic-release --prepareCmd "cd ca && dch --newversion \${nextRelease.version}-1 'Автоматизированная сборка и релиз на основе семантического версионирования.' && cd .."
+          VERSION=$(git rev-list --count HEAD)
+          cd ca
+          dch --newversion "${VERSION}-1" "Автоматическая сборка и релиз на основе инкремента версии."
+          cd ..
 
       - name: Сборка DEB пакета
         run: |
@@ -58,5 +49,5 @@ jobs:
         run: |
           cd deb-repo
           git add .
-          git commit -m "Обновление DEB пакетов с новой версией."
+          git commit -m "Обновление DEB пакетов с новой версией ${VERSION}."
           git push --set-upstream origin main
