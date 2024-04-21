@@ -20,12 +20,12 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
+          git config --global http.https://github.com/.extraheader "AUTHORIZATION: bearer ${{ secrets.VPN_INFRA_REPO_ACCESS_TOKEN }}"
 
       - name: Инкрементирование версии и обновление changelog
         env:
           DEBEMAIL: "actions@github.com"
           DEBFULLNAME: "GitHub Actions"
-          GITHUB_TOKEN: ${{ secrets.VPN_INFRA_REPO_ACCESS_TOKEN }}
         run: |
           cd ca
           CURRENT_VERSION=$(dpkg-parsechangelog --show-field Version)
