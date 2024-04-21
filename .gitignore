@@ -116,4 +116,5 @@ dmypy.json
 .idea/
 
 ansible/inventory/hosts
-ansible/playbook/pub_keys/*.pub
+ansible/playbook/pub_keys/id_rsa_CA.pub
+ansible/playbook/pub_keys/id_rsa_VPN.pub
