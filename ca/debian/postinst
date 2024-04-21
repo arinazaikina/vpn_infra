@@ -4,7 +4,14 @@ set -e
 
 case "$1" in
     configure)
+        if [ -n "$SUDO_USER" ]; then
+            HOME_USER=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+        else
+            HOME_USER="$HOME"
+        fi
+
         /usr/bin/setup-easyrsa-ca.sh
+        chown -R "$SUDO_USER":"$SUDO_USER" "$HOME_USER/easy-rsa"
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

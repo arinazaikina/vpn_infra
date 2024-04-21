@@ -2,13 +2,17 @@
 
 set -e
 
+if [ -n "$SUDO_USER" ]; then
+    HOME_USER=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+else
+    HOME_USER="$HOME"
+fi
+
 case "$1" in
     remove|purge)
-
         if [ "$1" = "purge" ]; then
-            # Команды для выполнения при полном удалении пакета (purge)
             echo "Очищение всех данных, связанных с пакетом"
-            rm -rf /root/easy-rsa
+            rm -rf "$HOME_USER/easy-rsa"
         fi
         ;;
     upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
