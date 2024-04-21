@@ -9,7 +9,6 @@ case "$1" in
             # Команды для выполнения при полном удалении пакета (purge)
             echo "Очищение всех данных, связанных с пакетом"
             rm -rf /root/easy-rsa
-			rm -f /etc/myvpn/ip_addresses.conf
         fi
         ;;
     upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
