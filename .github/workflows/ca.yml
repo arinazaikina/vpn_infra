@@ -17,10 +17,24 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y dpkg-dev debhelper devscripts
 
       - name: Инкрементирование версии и обновление changelog
+        env:
+          DEBEMAIL: "sav2405@gmail.com"
+          DEBFULLNAME: "Arina"
         run: |
-          VERSION=$(git rev-list --count HEAD)
           cd ca
-          dch --newversion "${VERSION}-1" "Автоматическая сборка и релиз на основе инкремента версии."
+          # Получение текущей версии из changelog
+          CURRENT_VERSION=$(dpkg-parsechangelog --show-field Version)
+          # Извлечение основной и подверсии
+          BASE_VERSION=$(echo $CURRENT_VERSION | cut -d'-' -f1)
+          REVISION=$(echo $CURRENT_VERSION | cut -d'-' -f2)
+          # Инкремент ревизии
+          NEW_REVISION=$(($REVISION + 1))
+          # Формирование новой версии
+          NEW_VERSION="${BASE_VERSION}-${NEW_REVISION}"
+          # Обновление changelog
+          dch --newversion $NEW_VERSION "Automated increment based on new commit."
+          dch -r ""
+          cat debian/changelog
           cd ..
 
       - name: Сборка DEB пакета
@@ -49,5 +63,5 @@ jobs:
         run: |
           cd deb-repo
           git add .
-          git commit -m "Обновление DEB пакетов с новой версией ${VERSION}."
+          git commit -m "Update DEB packages to version $NEW_VERSION."
           git push --set-upstream origin main
