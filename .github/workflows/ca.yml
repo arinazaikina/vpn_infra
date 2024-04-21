@@ -36,7 +36,8 @@ jobs:
           dch --newversion $NEW_VERSION "Automated increment based on new commit."
           dch -r ""
           cat debian/changelog
-          git config --global http.extraheader "AUTHORIZATION: bearer ${{ secrets.GITHUB_TOKEN }}"
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
           git add debian/changelog
           git commit -m "Update changelog to version $NEW_VERSION"
           git push
