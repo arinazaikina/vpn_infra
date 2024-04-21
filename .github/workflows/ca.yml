@@ -16,7 +16,7 @@ jobs:
       - name: Установка Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '14'
+          node-version: '20'
 
       - name: Установка зависимостей для сборки DEB пакета
         run: sudo apt-get update && sudo apt-get install -y dpkg-dev debhelper devscripts
