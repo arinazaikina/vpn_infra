@@ -55,7 +55,7 @@ jobs:
 
       - name: Копирование DEB пакета в репозиторий
         run: |
-          cp *.deb ./deb-repo/ca/
+          cp *.deb ./deb-repo/
 
       - name: Настройка конфигурации Git
         run: |
