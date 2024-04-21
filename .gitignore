@@ -116,4 +116,4 @@ dmypy.json
 .idea/
 
 ansible/inventory/hosts
-ansible/playbook/pub_keys/
+ansible/playbook/pub_keys/*.pub
