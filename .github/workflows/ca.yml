@@ -25,18 +25,14 @@ jobs:
         env:
           DEBEMAIL: "actions@github.com"
           DEBFULLNAME: "GitHub Actions"
+          GITHUB_TOKEN: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
         run: |
           cd ca
-          # Получение текущей версии из changelog
           CURRENT_VERSION=$(dpkg-parsechangelog --show-field Version)
-          # Извлечение основной и подверсии
           BASE_VERSION=$(echo $CURRENT_VERSION | cut -d'-' -f1)
           REVISION=$(echo $CURRENT_VERSION | cut -d'-' -f2)
-          # Инкремент ревизии
           NEW_REVISION=$(($REVISION + 1))
-          # Формирование новой версии
           NEW_VERSION="${BASE_VERSION}-${NEW_REVISION}"
-          # Обновление changelog
           dch --newversion $NEW_VERSION "Automated increment based on new commit."
           dch -r ""
           cat debian/changelog
