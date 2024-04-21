@@ -22,11 +22,10 @@ jobs:
           git config user.email "actions@github.com"
 
       - name: Инкрементирование версии и обновление changelog
-        with:
-          token: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
         env:
           DEBEMAIL: "actions@github.com"
           DEBFULLNAME: "GitHub Actions"
+          MY_PAT: ${{ secrets.DEB_REPO_ACCESS_TOKEN }}
         run: |
           cd ca
           CURRENT_VERSION=$(dpkg-parsechangelog --show-field Version)
