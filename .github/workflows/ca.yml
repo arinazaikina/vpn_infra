@@ -25,7 +25,7 @@ jobs:
         env:
           DEBEMAIL: "actions@github.com"
           DEBFULLNAME: "GitHub Actions"
-          MY_PAT: ${{ secrets.VPN_INFRA_REPO_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.VPN_INFRA_REPO_ACCESS_TOKEN }}
         run: |
           cd ca
           CURRENT_VERSION=$(dpkg-parsechangelog --show-field Version)
