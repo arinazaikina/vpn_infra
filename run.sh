@@ -22,4 +22,10 @@ ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_ssh.yml
 echo "Запуск Ansible playbook для настройки firewall..."
 ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_firewall.yml
 
+echo "Запуск Ansible playbook для настройки пользовательского APT репозитория..."
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_apt_repository.yml
+
+echo "Запуск Ansible playbook для настройки сервера удостоверяющего центра..."
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/install_ca_package.yml
+
 echo "Все операции выполнены успешно!"
