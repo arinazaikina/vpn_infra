@@ -62,7 +62,7 @@ def write_inventory(ips):
         f.write(f"local_host_ip={public_ip}\n\n")
         for name, ip in ips.items():
             f.write(f"[{name}]\n")
-            f.write(f"{ip}\n\n")
+            f.write(f"{name.lower()}_server ansible_host={ip}\n\n")
 
     print(f"Inventory файл создан: {hosts_file_path}")
 

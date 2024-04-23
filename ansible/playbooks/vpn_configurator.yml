@@ -1,0 +1,54 @@
+---
+- hosts: VPN
+  become: yes
+  gather_facts: yes
+  vars:
+    config_file: "/etc/myvpn/vpn_config.conf"
+    ca_dir: "~/easy-rsa"
+
+  tasks:
+    - name: Находим основной сетевой интерфейс
+      set_fact:
+        main_interface: "{{ ansible_default_ipv4.interface }}"
+      when: ansible_default_ipv4.interface is defined
+
+    - name: Создание директории для конфигурации, если она отсутствует
+      file:
+        path: "/etc/myvpn"
+        state: directory
+        mode: '0755'
+
+    - name: Создание файла конфигурации VPN
+      copy:
+        dest: "{{ config_file }}"
+        content: |
+          # Configuration for VPN
+          CA_USER={{ ansible_ssh_user }}
+          CA_IP={{ hostvars['ca_server'].ansible_host }}
+          CA_DIR={{ ca_dir }}
+          ETH_INTERFACE={{ main_interface }}
+
+    - name: Проверка наличия файла конфигурации и его содержимого
+      shell: |
+        if [ -f "{{ config_file }}" ]; then
+          source "{{ config_file }}"
+          if [ -z "$CA_USER" ] || [ -z "$CA_IP" ] || [ -z "$CA_DIR" ] || [ -z "$ETH_INTERFACE" ]; then
+            echo "Файл конфигурации не содержит необходимых настроек."
+            exit 1
+          else
+            echo "Конфигурация установлена:"
+            echo "Пользователь удостоверяющего центра: $CA_USER"
+            echo "IP удостоверяющего центра: $CA_IP"
+            echo "Директория Easy-RSA на удостоверяющем центре: $CA_DIR"
+            echo "Сетевой интерфейс: $ETH_INTERFACE"
+          fi
+        else
+          echo "Файл конфигурации не найден: {{ config_file }}"
+          exit 1
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Вывод загруженной конфигурации
+      debug:
+        msg: "Конфигурация загружена из файла {{ config_file }}"

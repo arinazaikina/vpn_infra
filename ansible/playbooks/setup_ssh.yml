@@ -14,7 +14,7 @@
     - name: Очистка файла known_hosts
       known_hosts:
         path: "/home/{{ ansible_ssh_user }}/.ssh/known_hosts"
-        name: "{{ item }}"
+        name: "{{ hostvars[item].ansible_host }}"
         state: absent
       loop: "{{ groups['all'] }}"
 
@@ -49,17 +49,17 @@
 
     - name: Генерация SSH ключей для каждой машины
       openssh_keypair:
-        path: "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ group_names[0] }}"
+        path: "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ inventory_hostname }}"
         type: rsa
         size: 4096
-        comment: "{{ group_names[0] }}"
+        comment: "{{ inventory_hostname }}"
         force: no
       register: ssh_key_gen
 
     - name: Сбор публичных ключей всех машин
       fetch:
-        src: "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ group_names[0] }}.pub"
-        dest: "./pub_keys/id_rsa_{{ group_names[0] }}.pub"
+        src: "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ inventory_hostname }}.pub"
+        dest: "./pub_keys/id_rsa_{{ inventory_hostname }}.pub"
         flat: yes
 
     - name: Распределение публичных ключей на все машины
@@ -72,7 +72,7 @@
 
     - name: Установка правильных прав доступа для SSH ключей
       file:
-        path: "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ group_names[0] }}"
+        path: "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ inventory_hostname }}"
         owner: "{{ ansible_ssh_user }}"
         group: "{{ ansible_ssh_user }}"
         mode: '0600'
@@ -80,14 +80,14 @@
     - name: Добавление SSH ключа в агент
       shell: |
         eval "$(ssh-agent -s)"
-        ssh-add /home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ group_names[0] }}
+        ssh-add "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ inventory_hostname }}"
       args:
         executable: /bin/bash
 
     - name: Настройка файла конфигурации SSH для других узлов
       lineinfile:
         path: "/home/{{ ansible_ssh_user }}/.ssh/config"
-        line: "Host {{ item }}\n\tUser {{ ansible_ssh_user }}\n\tIdentityFile /home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ group_names[0] }}"
+        line: "Host {{ hostvars[item].ansible_host }}\n\tUser {{ ansible_ssh_user }}\n\tIdentityFile /home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ inventory_hostname }}"
         create: yes
       loop: "{{ groups['all'] | reject('eq', inventory_hostname) | list }}"
 

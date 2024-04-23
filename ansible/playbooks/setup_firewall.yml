@@ -31,9 +31,9 @@
         # Разрешение SSH доступа для текущего хоста
         iptables -A INPUT -p tcp --dport 22 -s {{ local_host_ip }} -j ACCEPT
 
-        # Разрешение SSH доступа для всех хостов в инвентаре по именам
+        # Разрешение SSH доступа для всех хостов в инвентаре
         {% for host in groups['all'] %}
-        iptables -A INPUT -p tcp --dport 22 -s {{ hostvars[host]['inventory_hostname'] }} -j ACCEPT
+        iptables -A INPUT -p tcp --dport 22 -s {{ hostvars[host]['ansible_host'] }} -j ACCEPT
         {% endfor %}
 
     - name: Сохранение настроек iptables
