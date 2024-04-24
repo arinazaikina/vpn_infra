@@ -47,6 +47,7 @@ jobs:
             git commit -m "Update $DIR changelog to version $NEW_VERSION"
             git push
             dpkg-buildpackage -us -uc -b
+            mv ../*.deb $GITHUB_WORKSPACE/
             cd ..
           done
 
