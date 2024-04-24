@@ -1,0 +1,12 @@
+Source: vpn
+Section: utils
+Priority: optional
+Maintainer: Arina <sav2405@gmail.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.6.0
+Rules-Requires-Root: no
+
+Package: vpn
+Architecture: all
+Depends: easy-rsa, openvpn
+Description: This package installs scripts for configuring OpenVPN

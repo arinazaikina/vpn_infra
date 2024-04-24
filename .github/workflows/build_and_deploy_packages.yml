@@ -1,4 +1,4 @@
-name: Сборка и развертывание пакета CA
+name: Сборка и развертывание пакетов
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'ca/**'
+      - 'vpn/**'
 
 jobs:
   deploy:
@@ -21,30 +22,33 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
+      - name: Определение изменённых директорий
+        id: set-var
+        run: |
+          echo "CHANGED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -E 'ca/|vpn/' | awk -F'/' '{print $1}' | uniq)" >> $GITHUB_ENV
+
       - name: Инкрементирование версии и обновление changelog
         env:
           DEBEMAIL: "actions@github.com"
           DEBFULLNAME: "GitHub Actions"
+        if: env.CHANGED_DIRS != ''
         run: |
-          cd ca
-          CURRENT_VERSION=$(dpkg-parsechangelog --show-field Version)
-          BASE_VERSION=$(echo $CURRENT_VERSION | cut -d'-' -f1)
-          REVISION=$(echo $CURRENT_VERSION | cut -d'-' -f2)
-          NEW_REVISION=$(($REVISION + 1))
-          NEW_VERSION="${BASE_VERSION}-${NEW_REVISION}"
-          dch --newversion $NEW_VERSION "Automated increment based on new commit."
-          dch -r ""
-          cat debian/changelog
-          git add debian/changelog
-          git commit -m "Update changelog to version $NEW_VERSION"
-          git push
-          cd ..
-
-      - name: Сборка DEB пакета
-        run: |
-          cd ca
-          dpkg-buildpackage -us -uc -b
-          cd ..
+          for DIR in $CHANGED_DIRS; do
+            cd $DIR
+            CURRENT_VERSION=$(dpkg-parsechangelog --show-field Version)
+            BASE_VERSION=$(echo $CURRENT_VERSION | cut -d'-' -f1)
+            REVISION=$(echo $CURRENT_VERSION | cut -d'-' -f2)
+            NEW_REVISION=$(($REVISION + 1))
+            NEW_VERSION="${BASE_VERSION}-${NEW_REVISION}"
+            dch --newversion $NEW_VERSION "Automated increment based on new commit."
+            dch -r ""
+            cat debian/changelog
+            git add debian/changelog
+            git commit -m "Update $DIR changelog to version $NEW_VERSION"
+            git push
+            dpkg-buildpackage -us -uc -b
+            cd ..
+          done
 
       - name: Клонирование репозитория DEB пакетов
         uses: actions/checkout@v2

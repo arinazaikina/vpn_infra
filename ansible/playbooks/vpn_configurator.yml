@@ -4,7 +4,7 @@
   gather_facts: yes
   vars:
     config_file: "/etc/myvpn/vpn_config.conf"
-    ca_dir: "~/easy-rsa"
+    ca_dir: "/home/{{ ansible_ssh_user }}/easy-rsa"
 
   tasks:
     - name: Находим основной сетевой интерфейс

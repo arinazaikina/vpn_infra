@@ -1,0 +1,32 @@
+#!/bin/bash
+
+set -e
+
+case "$1" in
+    remove|purge)
+        # Останавливаем сервис
+        if [ -x "/bin/systemctl" ]; then
+            echo "Остановка OpenVPN сервиса..."
+            /bin/systemctl stop openvpn-server@server.service > /dev/null 2>&1 || true
+        fi
+
+        # При полном удалении (purge) удаляем конфигурационные файлы и логи
+        if [ "$1" = "purge" ]; then
+            echo "Удаление конфигурационных файлов и логов..."
+            rm -rf /etc/openvpn/server/
+            rm -rf /etc/openvpn/client/
+            rm -f /var/log/openvpn/
+        fi
+    ;;
+
+    upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        # Здесь ничего не делаем
+    ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0

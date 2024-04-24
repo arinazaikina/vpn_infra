@@ -1,0 +1,3 @@
+init-pki.sh usr/bin
+generate-server-keys.sh usr/bin
+setup-vpn-server.sh
