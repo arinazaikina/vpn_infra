@@ -26,10 +26,17 @@ jobs:
 
       - name: Определение изменённых директорий
         run: |
-          echo "CHANGED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E 'ca/|vpn/' | awk -F'/' '{print $1}' | uniq)" >> $GITHUB_ENV
+          CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          echo "Измененные файлы: $CHANGED_FILES"
+          CHANGED_DIRS=$(echo "$CHANGED_FILES" | grep -E 'ca/|vpn/' | awk -F'/' '{print $1}' | uniq)
+          echo "CHANGED_DIRS=$CHANGED_DIRS" >> $GITHUB_ENV
           echo "Измененные директории: $CHANGED_DIRS"
 
       - name: Инкрементирование версии и обновление changelog
+        env:
+          DEBEMAIL: "actions@github.com"
+          DEBFULLNAME: "GitHub Actions"
+          EMAIL: "actions@github.com"
         if: env.CHANGED_DIRS != ''
         run: |
           for DIR in $CHANGED_DIRS; do
@@ -46,12 +53,13 @@ jobs:
             git commit -m "Update $DIR changelog to version $NEW_VERSION"
             git push
             dpkg-buildpackage -us -uc -b
-            echo "Список .deb файлов в $(pwd)"
-            ls ../*.deb
-            mv ../*.deb $GITHUB_WORKSPACE/
-            echo "Список .deb фалов в $GITHUB_WORKSPACE"
-            ls $GITHUB_WORKSPACE/*.deb
             cd ..
+            DEB_FILES=$(ls *.deb)
+            if [ -n "$DEB_FILES" ]; then
+              mv *.deb $GITHUB_WORKSPACE/
+            fi
+            echo "Список .deb файлов в $GITHUB_WORKSPACE"
+            ls $GITHUB_WORKSPACE/*.deb
           done
 
       - name: Клонирование репозитория DEB пакетов
