@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Установка зависимостей для сборки DEB пакета
         run: sudo apt-get update && sudo apt-get install -y dpkg-dev debhelper devscripts
@@ -23,14 +25,11 @@ jobs:
           git config user.email "actions@github.com"
 
       - name: Определение изменённых директорий
-        id: set-var
         run: |
-          echo "CHANGED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep -E 'ca/|vpn/' | awk -F'/' '{print $1}' | uniq)" >> $GITHUB_ENV
+          echo "CHANGED_DIRS=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E 'ca/|vpn/' | awk -F'/' '{print $1}' | uniq)" >> $GITHUB_ENV
+          echo "Измененные директории: $CHANGED_DIRS"
 
       - name: Инкрементирование версии и обновление changelog
-        env:
-          DEBEMAIL: "actions@github.com"
-          DEBFULLNAME: "GitHub Actions"
         if: env.CHANGED_DIRS != ''
         run: |
           for DIR in $CHANGED_DIRS; do
