@@ -54,10 +54,9 @@ jobs:
             git push
             dpkg-buildpackage -us -uc -b
             cd ..
-            DEB_FILES=$(ls *.deb)
-            if [ -n "$DEB_FILES" ]; then
-              mv *.deb $GITHUB_WORKSPACE/
-            fi
+            echo "Список .deb файлов в $(pwd)"
+            ls *.deb
+            cp *.deb $GITHUB_WORKSPACE/
             echo "Список .deb файлов в $GITHUB_WORKSPACE"
             ls $GITHUB_WORKSPACE/*.deb
           done
