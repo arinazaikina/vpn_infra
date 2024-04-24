@@ -47,7 +47,11 @@ jobs:
             git commit -m "Update $DIR changelog to version $NEW_VERSION"
             git push
             dpkg-buildpackage -us -uc -b
+            echo "Список .deb файлов в $(pwd)"
+            ls ../*.deb
             mv ../*.deb $GITHUB_WORKSPACE/
+            echo "Список .deb фалов в $GITHUB_WORKSPACE"
+            ls $GITHUB_WORKSPACE/*.deb
             cd ..
           done
 
@@ -60,7 +64,14 @@ jobs:
 
       - name: Копирование DEB пакета в репозиторий
         run: |
-          cp *.deb ./deb-repo/
+          shopt -s nullglob
+          files=($GITHUB_WORKSPACE/*.deb)
+          if [ ${#files[@]} -gt 0 ]; then
+            cp $GITHUB_WORKSPACE/*.deb ./deb-repo/
+          else
+            echo "Файлы .deb не найдены."
+            exit 1
+          fi
 
       - name: Настройка конфигурации Git
         run: |
