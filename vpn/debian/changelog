@@ -1,3 +1,10 @@
+vpn (1.0-2) jammy; urgency=medium
+
+  [ runner@fv-az1206-787.0vxl32vwipkujoye4f0dw5oaka.dx.internal.cloudapp.net ]
+  * Automated increment based on new commit.
+
+ --  <runner@fv-az1206-787.0vxl32vwipkujoye4f0dw5oaka.dx.internal.cloudapp.net>  Wed, 24 Apr 2024 20:28:06 +0000
+
 vpn (1.0-1) unstable; urgency=low
 
   * Initial release
