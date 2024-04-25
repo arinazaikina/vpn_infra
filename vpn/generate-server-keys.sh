@@ -24,7 +24,12 @@ echo "IP удостоверяющего центра: $CA_IP"
 echo "Директория Easy-RSA на ЦС: $CA_DIR"
 echo "Сетевой интерфейс: $ETH_INTERFACE"
 
-
+# Проверка и создание каталога /etc/openvpn/server, если он не существует
+if [ ! -d /etc/openvpn/server ]; then
+    sudo mkdir -p /etc/openvpn/server
+    sudo chmod 755 /etc/openvpn/server
+    echo "Создан каталог: /etc/openvpn/server"
+fi
 
 # Генерация ключа и CSR для VPN-сервера
 EASY_RSA="/etc/easy-rsa"
