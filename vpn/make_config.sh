@@ -41,7 +41,7 @@ cat "$BASE_CONFIG" \
     <(echo -e '</cert>\n<key>') \
     "$KEY_DIR/${1}.key" \
     <(echo -e '</key>\n<tls-crypt>') \
-    <(echo -e '#tls-crypt ta.key') \
+    "$KEY_DIR/ta.key" \
     <(echo -e '</tls-crypt>') \
     > "$OUTPUT_DIR/${1}.ovpn"
 

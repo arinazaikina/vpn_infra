@@ -4,11 +4,11 @@ set -e
 
 source venv/bin/activate
 
-echo "Создание виртуальных машин..."
-python vds/main.py
-
-echo "Ожидание 60 секунд..."
-sleep 60
+#echo "Создание виртуальных машин..."
+#python vds/main.py
+#
+#echo "Ожидание 60 секунд..."
+#sleep 60
 
 echo "Запуск Ansible playbook для настройки пользователей..."
 ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_user.yml
@@ -31,7 +31,7 @@ ansible-playbook -i ansible/inventory/hosts ansible/playbooks/install_ca_package
 echo "Запуск Ansible playbook для создания конфигурационного файла на VPN-сервере..."
 ansible-playbook -i ansible/inventory/hosts ansible/playbooks/vpn_configurator.yml
 
-#echo "Запуск Ansible playbook для настройки VPN-сервера..."
-#ansible-playbook -i ansible/inventory/hosts ansible/playbooks/install_vpn_package.yml
+echo "Запуск Ansible playbook для настройки VPN-сервера..."
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/install_vpn_package.yml
 
 echo "Все операции выполнены успешно!"

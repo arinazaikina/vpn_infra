@@ -64,7 +64,6 @@ group nogroup
 persist-key
 persist-tun
 remote-cert-tls server
-tls-crypt ta.key
 cipher AES-256-GCM
 auth SHA256
 verb 3
