@@ -15,7 +15,8 @@ case "$1" in
             echo "Удаление конфигурационных файлов и логов..."
             rm -rf /etc/openvpn/server/
             rm -rf /etc/openvpn/client/
-            rm -rf /var/log/openvpn/
+            echo "Очистка логов..."
+            find /var/log/openvpn/ -type f -delete
         fi
     ;;
 
