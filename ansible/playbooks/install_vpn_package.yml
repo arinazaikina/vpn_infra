@@ -17,3 +17,5 @@
         allow_unauthenticated: true
       environment:
         DEBIAN_FRONTEND: noninteractive
+      vars:
+        ansible_ssh_extra_args: "-o StrictHostKeyChecking=no"
