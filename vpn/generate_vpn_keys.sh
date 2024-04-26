@@ -100,6 +100,11 @@ if [ "$ENTITY" = "server" ]; then
         fi
         sudo cp ta.key "$ENTITY_DIR/ta.key"
     fi
+
+    if ! scp -i /home/"${CA_USER}"/.ssh/id_rsa_vpn_server "${CA_USER}"@"${CA_IP}":"${CA_DIR}"/pki/ca.crt $ENTITY_DIR; then
+        echo "Ошибка получения ca.crt для сервера"
+        exit 1
+    fi
 fi
 
 # Убедимся, что ca.crt и ta.key доступны как в серверной, так и в клиентской директориях
