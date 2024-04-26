@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /usr/bin/load_config.sh
+
 # Переменные директорий
 CLIENTS_DIR="/home/$CA_USER/clients/keys"
 SERVER_DIR="/etc/openvpn/server"

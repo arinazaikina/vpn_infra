@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /usr/bin/load_config.sh
+
 /usr/bin/generate_vpn_keys.sh server
 
 # Генерация TLS ключа для дополнительной защиты
