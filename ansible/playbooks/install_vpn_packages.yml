@@ -1,0 +1,19 @@
+---
+- name: Установка пакета vpn на сервер VPN
+  hosts: VPN
+  become: yes
+  tasks:
+    - name: Обновление списка пакетов
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Установка пакета CA
+      apt:
+        name: vpn
+        state: present
+        update_cache: yes
+        force: yes
+        allow_unauthenticated: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive

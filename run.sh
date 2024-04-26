@@ -31,4 +31,7 @@ ansible-playbook -i ansible/inventory/hosts ansible/playbooks/install_ca_package
 echo "Запуск Ansible playbook для создания конфигурационного файла на VPN-сервере..."
 ansible-playbook -i ansible/inventory/hosts ansible/playbooks/vpn_configurator.yml
 
+echo "Запуск Ansible playbook для настройки VPN-сервера..."
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/install_vpn_package.yml
+
 echo "Все операции выполнены успешно!"

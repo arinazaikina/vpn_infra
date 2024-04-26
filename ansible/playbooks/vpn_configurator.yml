@@ -27,12 +27,14 @@
           CA_IP={{ hostvars['ca_server'].ansible_host }}
           CA_DIR={{ ca_dir }}
           ETH_INTERFACE={{ main_interface }}
+          VPN_SERVER_IP={{ hostvars['vpn_server'].ansible_host }}
+          LOCAL_HOST_IP={{ local_host_ip }}
 
     - name: Проверка наличия файла конфигурации и его содержимого
       shell: |
         if [ -f "{{ config_file }}" ]; then
           source "{{ config_file }}"
-          if [ -z "$CA_USER" ] || [ -z "$CA_IP" ] || [ -z "$CA_DIR" ] || [ -z "$ETH_INTERFACE" ]; then
+          if [ -z "$CA_USER" ] || [ -z "$CA_IP" ] || [ -z "$CA_DIR" ] || [ -z "$ETH_INTERFACE" ] || [ -z "$VPN_SERVER_IP" ] [ -z "$LOCAL_HOST_IP" ]; then
             echo "Файл конфигурации не содержит необходимых настроек."
             exit 1
           else
@@ -41,6 +43,7 @@
             echo "IP удостоверяющего центра: $CA_IP"
             echo "Директория Easy-RSA на удостоверяющем центре: $CA_DIR"
             echo "Сетевой интерфейс: $ETH_INTERFACE"
+            echo "IP VPN-сервера: $VPN_SERVER_IP"
           fi
         else
           echo "Файл конфигурации не найден: {{ config_file }}"
