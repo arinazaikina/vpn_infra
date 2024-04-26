@@ -10,7 +10,7 @@ case "$1" in
             HOME_USER="$HOME"
         fi
 
-        /usr/bin/setup-easyrsa-ca.sh
+        /usr/bin/setup_easyrsa_ca.sh
         chown -R "$SUDO_USER":"$SUDO_USER" "$HOME_USER/easy-rsa"
     ;;
 
