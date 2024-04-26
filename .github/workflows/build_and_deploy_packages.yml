@@ -28,7 +28,7 @@ jobs:
         run: |
           CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
           echo "Измененные файлы: $CHANGED_FILES"
-          CHANGED_DIRS=$(echo "$CHANGED_FILES" | grep -E 'ca/|vpn/' | awk -F'/' '{print $1}' | uniq)
+          CHANGED_DIRS=$(echo "$CHANGED_FILES" | grep -E 'ca/|vpn/' | awk -F'/' '{print $1}' | uniq | tr '\n' ' ')
           echo "CHANGED_DIRS=$CHANGED_DIRS" >> $GITHUB_ENV
           echo "Измененные директории: $CHANGED_DIRS"
 
