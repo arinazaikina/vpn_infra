@@ -41,18 +41,27 @@ generate_key_and_csr() {
 
 # Функция для отправки и подписания CSR
 sign_csr() {
+    # Определение типа сертификата на основе $ENTITY
+    if [ "$ENTITY" = "server" ]; then
+        CERT_TYPE="server"
+    else
+        CERT_TYPE="client"
+    fi
+
     # Удаление старого CSR, если есть
     if ! ssh -i /home/"${CA_USER}"/.ssh/id_rsa_vpn_server "${CA_USER}@${CA_IP}" "cd ${CA_DIR} && rm -f pki/reqs/$ENTITY.req"; then
         echo "Не удалось удалить старый CSR на ЦС"
         exit 1
     fi
+
     # Отправка нового CSR
     if ! scp -i /home/"${CA_USER}"/.ssh/id_rsa_vpn_server "pki/reqs/$ENTITY.req" "${CA_USER}@${CA_IP}:${CA_DIR}/pki/reqs/"; then
         echo "Ошибка при отправке CSR на ЦС"
         exit 1
     fi
+
     # Подписание CSR
-    if ! ssh -i /home/"${CA_USER}"/.ssh/id_rsa_vpn_server "${CA_USER}@${CA_IP}" "cd ${CA_DIR} && ./easyrsa --batch sign-req $ENTITY $ENTITY"; then
+    if ! ssh -i /home/"${CA_USER}"/.ssh/id_rsa_vpn_server "${CA_USER}@${CA_IP}" "cd ${CA_DIR} && ./easyrsa --batch sign-req $CERT_TYPE $ENTITY"; then
         echo "Ошибка при подписании сертификата для $ENTITY на ЦС"
         exit 1
     fi
