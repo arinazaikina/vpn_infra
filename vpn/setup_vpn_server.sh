@@ -1,7 +1,19 @@
 #!/bin/bash
 
-# Проверка и создание директории конфигурации OpenVPN, если необходимо
-sudo mkdir -p /etc/openvpn/server/
+/usr/bin/generate_vpn_keys.sh server
+
+# Генерация TLS ключа для дополнительной защиты
+if ! openvpn --genkey secret ta.key; then
+    echo "Ошибка генерации TLS ключа"
+    exit 1
+fi
+sudo cp ta.key /etc/openvpn/server/
+
+# Получение ca.crt
+if ! scp -i /home/"${CA_USER}"/.ssh/id_rsa_vpn_server "${CA_USER}"@"${CA_IP}":"${CA_DIR}"/pki/ca.crt /etc/openvpn/server/; then
+   echo "Ошибка получения ca.crt"
+   exit 1
+fi
 
 # Конфигурация сервера OpenVPN
 sudo bash -c 'cat <<EOF > /etc/openvpn/server/server.conf

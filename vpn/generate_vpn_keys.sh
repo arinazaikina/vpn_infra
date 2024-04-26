@@ -91,34 +91,4 @@ sign_csr "$ENTITY"
 # Получение сертификата
 get_certificate "$ENTITY"
 
-if [ "$ENTITY" = "server" ]; then
-    # Генерация TLS ключа для дополнительной защиты, если еще не существует
-    if [ ! -f "$ENTITY_DIR/ta.key" ]; then
-        if ! openvpn --genkey secret ta.key; then
-            echo "Ошибка генерации TLS ключа"
-            exit 1
-        fi
-        sudo cp ta.key "$ENTITY_DIR/ta.key"
-    fi
-
-    if ! scp -i /home/"${CA_USER}"/.ssh/id_rsa_vpn_server "${CA_USER}"@"${CA_IP}":"${CA_DIR}"/pki/ca.crt $ENTITY_DIR; then
-        echo "Ошибка получения ca.crt для сервера"
-        exit 1
-    fi
-fi
-
-# Убедимся, что ca.crt и ta.key доступны как в серверной, так и в клиентской директориях
-CLIENTS_DIR="/home/$CA_USER/clients/"
-SERVER_DIR="/etc/openvpn/server"
-
-# Копирование ca.crt, если он еще не скопирован
-if [ ! -f "$CLIENTS_DIR/ca.crt" ]; then
-    sudo cp "$SERVER_DIR/ca.crt" "$CLIENTS_DIR/ca.crt"
-fi
-
-# Копирование ta.key, если он еще не скопирован
-if [ ! -f "$CLIENTS_DIR/ta.key" ]; then
-    sudo cp "$SERVER_DIR/ta.key" "$CLIENTS_DIR/ta.key"
-fi
-
-echo "Операция завершена успешно для сущности: $ENTITY"
+echo "Для $ENTITY успешно создан ключ и сертификат"

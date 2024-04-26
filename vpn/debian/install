@@ -1,3 +1,4 @@
 init_pki.sh usr/bin
 generate_vpn_keys.sh usr/bin
 setup_vpn_server.sh usr/bin
+setup_client_config.sh usr/bin

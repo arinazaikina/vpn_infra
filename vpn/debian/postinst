@@ -5,8 +5,8 @@ set -e
 case "$1" in
     configure)
         /usr/bin/init_pki.sh
-         /usr/bin/generate_vpn_keys.sh server
         /usr/bin/setup_vpn_server.sh
+        /usr/bin/setup_client_config.sh
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
