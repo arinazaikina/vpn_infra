@@ -44,6 +44,9 @@ fi
 sudo mkdir -p "$ENTITY_DIR"
 sudo chmod 755 "$ENTITY_DIR"
 
+EASY_RSA="/etc/easy-rsa"
+cd "$EASY_RSA" || { echo "Ошибка: Не удалось перейти в директорию $EASY_RSA"; exit 1; }
+
 # Функция для создания ключа и CSR
 generate_key_and_csr() {
     if ./easyrsa --batch gen-req "$ENTITY" nopass && cp "pki/private/$ENTITY.key" "$ENTITY_DIR/$ENTITY.key"; then
