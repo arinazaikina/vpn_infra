@@ -11,7 +11,7 @@ if [ -z "$ENTITY" ]; then
 fi
 
 # Определение директории для сохранения ключей и сертификатов
-ENTITY_DIR="/home/$CA_USER/clients/"
+ENTITY_DIR="/home/$CA_USER/clients/keys"
 if [ "$ENTITY" = "server" ]; then
     ENTITY_DIR="/etc/openvpn/server"
 else

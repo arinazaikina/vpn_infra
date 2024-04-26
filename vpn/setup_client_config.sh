@@ -3,13 +3,14 @@
 source /usr/bin/load_config.sh
 
 # Переменные директорий
-CLIENTS_DIR="/home/$CA_USER/clients/keys"
+CLIENTS_KEYS_DIR="/home/$CA_USER/clients/keys"
+BASE_CONFIG_DIR="/home/$CA_USER/clients"
 SERVER_DIR="/etc/openvpn/server"
 
 # Проверяем и создаем поддиректорию keys, если она не существует
-if [ ! -d "$CLIENTS_DIR" ]; then
+if [ ! -d "$CLIENTS_KEYS_DIR" ]; then
     echo "Поддиректория 'keys' не найдена. Создаем..."
-    if ! mkdir -p "$CLIENTS_DIR"; then
+    if ! mkdir -p "$CLIENTS_KEYS_DIR"; then
         echo "Не удалось создать поддиректорию 'keys'."
         exit 1
     else
@@ -45,7 +46,29 @@ copy_file() {
 }
 
 # Копирование файла ca.crt
-copy_file "$SERVER_DIR/ca.crt" "$CLIENTS_DIR"
+copy_file "$SERVER_DIR/ca.crt" "$CLIENTS_KEYS_DIR"
 
 # Копирование файла ta.key
-copy_file "$SERVER_DIR/ta.key" "$CLIENTS_DIR"
+copy_file "$SERVER_DIR/ta.key" "$CLIENTS_KEYS_DIR"
+
+echo "Создание файла base.conf..."
+cat <<EOF > "$BASE_CONFIG_DIR/base.conf"
+client
+dev tun
+proto udp
+remote $VPN_SERVER_IP 1194
+resolv-retry infinite
+nobind
+user nobody
+group nogroup
+persist-key
+persist-tun
+remote-cert-tls server
+tls-crypt ta.key
+cipher AES-256-GCM
+auth SHA256
+verb 3
+key-direction 1
+EOF
+
+echo "Файл base.conf успешно создан в $BASE_CONFIG_DIR"

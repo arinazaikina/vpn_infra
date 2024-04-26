@@ -7,6 +7,7 @@ case "$1" in
         /usr/bin/init_pki.sh
         /usr/bin/setup_vpn_server.sh
         /usr/bin/setup_client_config.sh
+        chmod 700 /usr/bin/make_config.sh
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
