@@ -4,11 +4,11 @@ set -e
 
 source venv/bin/activate
 
-#echo "Создание виртуальных машин..."
-#python vds/main.py
-#
-#echo "Ожидание 60 секунд..."
-#sleep 60
+echo "Создание виртуальных машин..."
+python vds/main.py
+
+echo "Ожидание 60 секунд..."
+sleep 60
 
 echo "Запуск Ansible playbook для настройки пользователей..."
 ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_user.yml

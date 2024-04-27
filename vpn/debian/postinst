@@ -8,9 +8,13 @@ case "$1" in
         /usr/bin/setup_vpn_server.sh
         /usr/bin/setup_client_config.sh
         chmod 700 /usr/bin/make_config.sh
+        ln -sf /usr/bin/make_config.sh /usr/bin/make_config
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
+        if [ "$1" = "purge" ]; then
+            rm -f /usr/bin/make_config
+        fi
     ;;
 
     *)

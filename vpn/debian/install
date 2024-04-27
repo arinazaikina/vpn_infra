@@ -4,4 +4,3 @@ setup_vpn_server.sh usr/bin
 setup_client_config.sh usr/bin
 load_config.sh usr/bin
 make_config.sh usr/bin
-
