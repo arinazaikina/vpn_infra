@@ -1,3 +1,9 @@
+ca (1.0-3) jammy; urgency=medium
+
+  * Automated increment based on new commit.
+
+ -- GitHub Actions <actions@github.com>  Sat, 27 Apr 2024 13:30:54 +0000
+
 ca (1.0-2) jammy; urgency=medium
 
   * Automated increment based on new commit.
