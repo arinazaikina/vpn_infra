@@ -1,8 +1,14 @@
 ---
-- name: Установка пакета vpn на сервер VPN
+- name: Установка пакета VPN на сервер VPN
   hosts: VPN
   become: yes
   tasks:
+    - name: Отключение unattended-upgrades перед выполнением основных задач
+      ansible.builtin.systemd:
+        name: unattended-upgrades
+        state: stopped
+      become: true
+
     - name: Обновление списка пакетов
       apt:
         update_cache: yes
@@ -13,5 +19,12 @@
         name: vpn
         state: present
         update_cache: yes
-        force: yes
         allow_unauthenticated: true
+      environment:
+        DEBIAN_FRONTEND: noninteractive
+
+    - name: Включение unattended-upgrades после выполнения основных задач
+      ansible.builtin.systemd:
+        name: unattended-upgrades
+        state: started
+      become: true

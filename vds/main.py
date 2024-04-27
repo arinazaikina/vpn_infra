@@ -58,7 +58,7 @@ def write_inventory(ips):
         f.write(f"new_user={USER}\n")
         f.write(f"ansible_ssh_private_key_file={SSH_PRIVATE_KEY_PATH}\n")
         f.write(f"ansible_ssh_public_key_file={SSH_PUBLIC_KEY_PATH}\n")
-        f.write("ansible_ssh_common_args='-o StrictHostKeyChecking=no -o IdentitiesOnly=yes'\n")
+        f.write("ansible_ssh_common_args='-o StrictHostKeyChecking=no -o IdentitiesOnly=yes -o ControlMaster=no'\n")
         f.write(f"local_host_ip={public_ip}\n\n")
         for name, ip in ips.items():
             f.write(f"[{name}]\n")

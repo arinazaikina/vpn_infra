@@ -62,6 +62,14 @@
         dest: "./pub_keys/id_rsa_{{ inventory_hostname }}.pub"
         flat: yes
 
+    - name: Добавление отпечатков ключей хостов в known_hosts
+      known_hosts:
+        path: "/home/{{ ansible_ssh_user }}/.ssh/known_hosts"
+        name: "{{ hostvars[item].ansible_host }}"
+        key: "{{ lookup('pipe', 'ssh-keyscan -t rsa ' + hostvars[item].ansible_host) }}"
+        state: present
+      loop: "{{ groups['all'] }}"
+
     - name: Распределение публичных ключей на все машины
       authorized_key:
         user: "{{ ansible_ssh_user }}"
@@ -87,9 +95,26 @@
     - name: Настройка файла конфигурации SSH для других узлов
       lineinfile:
         path: "/home/{{ ansible_ssh_user }}/.ssh/config"
-        line: "Host {{ hostvars[item].ansible_host }}\n\tUser {{ ansible_ssh_user }}\n\tIdentityFile /home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ inventory_hostname }}"
+        line: |
+          Host {{ hostvars[item].ansible_host }}
+            User {{ ansible_ssh_user }}
+            IdentityFile /home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ inventory_hostname }}
         create: yes
+        state: present
       loop: "{{ groups['all'] | reject('eq', inventory_hostname) | list }}"
+
+    - name: Настройка файла конфигурации SSH для рута
+      lineinfile:
+        path: "/root/.ssh/config"
+        line: |
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+        create: yes
+        owner: root
+        group: root
+        mode: '0644'
+      become: yes
 
   handlers:
     - name: restart sshd
