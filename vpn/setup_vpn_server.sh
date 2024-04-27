@@ -55,4 +55,4 @@ sudo sysctl -p
 sudo systemctl start openvpn-server@server.service
 sudo systemctl enable openvpn-server@server.service
 
-echo "Настройка VPN-сервера завершена"
+echo "Настройка VPN-сервера завершена."
