@@ -1,3 +1,9 @@
+vpn (1.0-1) jammy; urgency=medium
+
+  * Automated increment based on new commit.
+
+ -- GitHub Actions <actions@github.com>  Sat, 27 Apr 2024 12:04:09 +0000
+
 vpn (1.0-0) unstable; urgency=low
 
   * Initial release
