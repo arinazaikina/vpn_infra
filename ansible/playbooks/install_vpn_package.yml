@@ -9,4 +9,9 @@
         cache_valid_time: 3600
 
     - name: Установка пакета VPN
-      shell: apt-get install -y vpn
+      apt:
+        name: vpn
+        state: present
+        update_cache: yes
+        force: yes
+        allow_unauthenticated: true
