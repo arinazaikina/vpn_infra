@@ -39,7 +39,7 @@
     - name: Находим основной сетевой интерфейс VPN сервера
       set_fact:
         main_interface: "{{ ansible_default_ipv4.interface }}"
-      when: ansible_default_ipv4.interface is defined and 'VPN' in group_names
+      when: ansible_default_ipv4.interface is defined and 'vpn' in group_names
 
     - name: Настройка правил iptables для VPN сервера
       ansible.builtin.shell: |
@@ -52,7 +52,7 @@
         
         # Настройка NAT для клиентов VPN
         iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o {{ main_interface }} -j MASQUERADE
-      when: "'VPN' in group_names"
+      when: "'vpn' in group_names"
 
     - name: Сохранение настроек iptables
       ansible.builtin.shell: iptables-save > /etc/iptables/rules.v4

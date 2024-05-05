@@ -4,17 +4,11 @@ set -e
 
 source venv/bin/activate
 
-#echo "Создание виртуальных машин..."
-#python vds/main.py
+echo "Создание виртуальных машин..."
+python yandex_cloud/main.py
 
-#echo "Ожидание 60 секунд..."
-#sleep 60
-
-echo "Запуск Ansible playbook для настройки пользователей..."
-ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_user.yml
-
-echo "Запуск Python скрипта для обновления файла hosts..."
-python vds/ansible_ssh_user.py -v
+echo "Ожидание 30 секунд..."
+sleep 30
 
 echo "Запуск Ansible playbook для настройки SSH..."
 ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_ssh.yml
@@ -24,6 +18,9 @@ ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_firewall.yml
 
 echo "Запуск Ansible playbook для настройки пользовательского APT репозитория..."
 ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_apt_repository.yml
+
+echo "Запуск Ansible playbook для настройки SMTP..."
+ansible-playbook -i ansible/inventory/hosts ansible/playbooks/setup_smtp.yml
 
 echo "Запуск Ansible playbook для настройки сервера удостоверяющего центра..."
 ansible-playbook -i ansible/inventory/hosts ansible/playbooks/install_ca_package.yml

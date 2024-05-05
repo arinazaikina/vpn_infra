@@ -1,5 +1,5 @@
 - name: Установка пакета CA на сервер CA
-  hosts: CA
+  hosts: ca
   become: yes
   tasks:
     - name: Отключение unattended-upgrades перед выполнением основных задач

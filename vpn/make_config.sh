@@ -1,9 +1,19 @@
 #!/bin/bash
 
 # Первый аргумент: Идентификатор клиента
+# Второй аргумент (необязательный): -m email@example.com
+
 if [ -z "$1" ]; then
     echo "Необходимо указать идентификатор клиента как первый аргумент."
     exit 1
+fi
+
+EMAIL=
+SEND_MAIL=false
+
+if [ "$2" == "-m" ] && [ -n "$3" ]; then
+    EMAIL="$3"
+    SEND_MAIL=true
 fi
 
 source /usr/bin/load_config.sh
@@ -45,9 +55,19 @@ cat "$BASE_CONFIG" \
     <(echo -e '</tls-crypt>') \
     > "$OUTPUT_DIR/${1}.ovpn"
 
-if cat "$OUTPUT_DIR/${1}.ovpn"; then
-    echo "Конфигурация для $1 успешно создана в $OUTPUT_DIR/${1}.ovpn"
+if [ "$SEND_MAIL" = true ]; then
+    echo "Отправка конфигурации $1 на $EMAIL..."
+    if echo "Конфигурация VPN для $1" | msmtp -a yandex -s "Конфигурация VPN для $1" -a "$OUTPUT_DIR/${1}.ovpn" "$EMAIL"; then
+        echo "Конфигурация для $1 успешно отправлена на $EMAIL"
+    else
+        echo "Ошибка при отправке конфигурации для $1"
+        exit 1
+    fi
 else
-    echo "Ошибка при создании конфигурации для $1"
-    exit 1
+    if cat "$OUTPUT_DIR/${1}.ovpn"; then
+        echo "Конфигурация для $1 успешно создана в $OUTPUT_DIR/${1}.ovpn"
+    else
+        echo "Ошибка при создании конфигурации для $1"
+        exit 1
+    fi
 fi

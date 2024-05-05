@@ -1,6 +1,6 @@
 ---
 - name: Установка пакета VPN на сервер VPN
-  hosts: VPN
+  hosts: vpn
   become: yes
   tasks:
     - name: Отключение unattended-upgrades перед выполнением основных задач
