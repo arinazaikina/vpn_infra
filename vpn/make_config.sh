@@ -56,15 +56,47 @@ cat "$BASE_CONFIG" \
     > "$OUTPUT_DIR/${1}.ovpn"
 
 if [ "$SEND_MAIL" = true ]; then
-    echo "Отправка конфигурации $1 на $EMAIL..."
-    if echo "Конфигурация VPN для $1" | msmtp -a yandex -s "Конфигурация VPN для $1" -a "$OUTPUT_DIR/${1}.ovpn" "$EMAIL"; then
-        echo "Конфигурация для $1 успешно отправлена на $EMAIL"
-    else
+    # Подготовка письма и отправка
+    subject="VPN конфигурация для ${1}"
+    filename="$OUTPUT_DIR/${1}.ovpn"
+    basename=$(basename "$filename")
+    tempfile="/tmp/email-$$.txt"
+
+    echo "From: arina.viejo@yandex.ru
+To: $EMAIL
+Subject: $subject
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary=\"sep\"
+
+--sep
+Content-Type: text/plain; charset=\"UTF-8\"
+Content-Transfer-Encoding: 8bit
+
+Привет!
+
+Файл конфигурации VPN находится во вложении.
+
+--sep
+Content-Type: application/x-openvpn-profile; name=\"$basename\"
+Content-Disposition: attachment; filename=\"$basename\"
+Content-Transfer-Encoding: base64" > "$tempfile"
+
+    base64 "$filename" >> "$tempfile"
+    echo "--sep--" >> "$tempfile"
+
+    # Отправка письма
+    if ! msmtp -a yandex "$EMAIL" < "$tempfile"; then
         echo "Ошибка при отправке конфигурации для $1"
+        rm "$tempfile"
         exit 1
+    else
+        echo "Конфигурация для $1 успешно отправлена на $EMAIL"
     fi
+
+    # Удаление временного файла
+    rm "$tempfile"
 else
-    if cat "$OUTPUT_DIR/${1}.ovpn"; then
+    if [ -f "$OUTPUT_DIR/${1}.ovpn" ]; then
         echo "Конфигурация для $1 успешно создана в $OUTPUT_DIR/${1}.ovpn"
     else
         echo "Ошибка при создании конфигурации для $1"
