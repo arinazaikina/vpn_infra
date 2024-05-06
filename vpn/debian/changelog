@@ -1,3 +1,9 @@
+vpn (1.0-5) jammy; urgency=medium
+
+  * Automated increment based on new commit.
+
+ -- GitHub Actions <actions@github.com>  Mon, 06 May 2024 18:59:56 +0000
+
 vpn (1.0-4) jammy; urgency=medium
 
   * Automated increment based on new commit.
