@@ -1,0 +1,7 @@
+# Configuration for VPN
+CA_USER={{ ansible_ssh_user }}
+CA_IP={{ hostvars['ca_server'].ansible_host }}
+CA_DIR={{ ca_dir }}
+ETH_INTERFACE={{ main_interface }}
+VPN_SERVER_IP={{ hostvars['vpn_server'].ansible_host }}
+LOCAL_HOST_IP={{ local_host_ip }}

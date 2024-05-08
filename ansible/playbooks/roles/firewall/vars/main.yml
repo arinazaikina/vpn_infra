@@ -1,0 +1,5 @@
+ssh_port: 22
+prometheus_port: 9090
+grafana_port: 3000
+iptables_directory: "/etc/iptables"
+iptables_rules_path: "/etc/iptables/rules.v4"

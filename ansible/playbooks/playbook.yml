@@ -1,0 +1,26 @@
+- hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - ssh
+    - firewall
+    - custom_repo
+
+- hosts: ca
+  become: true
+  gather_facts: true
+  roles:
+    - role: package_install
+      vars:
+        package_name: ca
+
+- hosts: vpn
+  become: true
+  gather_facts: true
+  roles:
+    - vpn_firewall
+    - msmtp
+    - vpn_configurator
+    - role: package_install
+      vars:
+        package_name: vpn

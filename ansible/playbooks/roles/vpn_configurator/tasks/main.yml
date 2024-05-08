@@ -1,0 +1,45 @@
+- name: Находим основной сетевой интерфейс
+  set_fact:
+    main_interface: "{{ ansible_default_ipv4.interface }}"
+  when: ansible_default_ipv4.interface is defined
+
+- name: Создание директории для конфигурации, если она отсутствует
+  file:
+    path: "{{ vpn_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Создание файла конфигурации VPN
+  template:
+    src: vpn_config.j2
+    dest: "{{ config_file }}"
+    mode: '0644'
+
+- name: Проверка наличия файла конфигурации
+  ansible.builtin.stat:
+    path: "{{ config_file }}"
+  register: config_file_stat
+
+- name: Чтение файла конфигурации
+  ansible.builtin.slurp:
+    src: "{{ config_file }}"
+  register: config_file_content
+  when: config_file_stat.stat.exists
+
+- name: Декодирование содержимого конфигурационного файла
+  set_fact:
+    config_content: "{{ (config_file_content['content'] | b64decode) }}"
+  when: config_file_stat.stat.exists
+
+- name: Проверка наличия всех необходимых настроек в конфигурации
+  ansible.builtin.assert:
+    that:
+      - "'CA_USER=' in config_content"
+      - "'CA_IP=' in config_content"
+      - "'CA_DIR=' in config_content"
+      - "'ETH_INTERFACE=' in config_content"
+      - "'VPN_SERVER_IP=' in config_content"
+      - "'LOCAL_HOST_IP=' in config_content"
+    fail_msg: "Конфигурация не полная"
+    success_msg: "Конфигурация установлена"
+  when: config_file_stat.stat.exists

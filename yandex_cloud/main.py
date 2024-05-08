@@ -81,25 +81,31 @@ def write_inventory(ips):
     project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
     inventory_path = os.path.join(project_root, 'ansible', 'inventory')
-    hosts_file_path = os.path.join(inventory_path, 'hosts')
-
     os.makedirs(inventory_path, exist_ok=True)
+
+    group_vars_path = os.path.join(project_root, 'ansible', 'inventory', 'group_vars')
+    os.makedirs(group_vars_path, exist_ok=True)
+
+    hosts_file_path = os.path.join(inventory_path, 'hosts.ini')
+    all_vars_path = os.path.join(group_vars_path, 'all')
+
     public_ip = get_public_ip()
 
+    with open(all_vars_path, 'w') as f:
+        f.write(f"ansible_ssh_user: {USER}\n")
+        f.write(f"ansible_ssh_private_key_file: {SSH_PRIVATE_KEY_PATH}\n")
+        f.write(f"ansible_ssh_public_key_file: {SSH_PUBLIC_KEY_PATH}\n")
+        f.write("ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o IdentitiesOnly=yes -o ControlMaster=no'\n")
+        f.write(f"local_host_ip: {public_ip}\n")
+        f.write(f"yandex_email: {YANDEX_EMAIL}\n")
+        f.write(f"yandex_email_password: {YANDEX_EMAIL_PASSWORD}\n")
+    print(f"Файл group_vars/all создан: {all_vars_path}")
+
     with open(hosts_file_path, 'w') as f:
-        f.write("[all:vars]\n")
-        f.write(f"ansible_ssh_user={USER}\n")
-        f.write(f"ansible_ssh_private_key_file={SSH_PRIVATE_KEY_PATH}\n")
-        f.write(f"ansible_ssh_public_key_file={SSH_PUBLIC_KEY_PATH}\n")
-        f.write("ansible_ssh_common_args='-o StrictHostKeyChecking=no -o IdentitiesOnly=yes -o ControlMaster=no'\n")
-        f.write(f"local_host_ip={public_ip}\n")
-        f.write(f"yandex_email={YANDEX_EMAIL}\n")
-        f.write(f"yandex_email_password={YANDEX_EMAIL_PASSWORD}\n\n")
         for name, ip in ips.items():
             f.write(f"[{name}]\n")
-            f.write(f"{name.lower()}_server ansible_host={ip}\n\n")
-
-    print(f"Inventory файл создан: {hosts_file_path}")
+            f.write(f"{name.lower()}_server ansible_host={ip}\n")
+    print(f"hosts.ini файл создан: {hosts_file_path}")
 
 
 if __name__ == "__main__":

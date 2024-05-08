@@ -1,0 +1,8 @@
+rsa_key_size: 4096
+ssh_known_hosts_path: "/home/{{ ansible_ssh_user }}/.ssh/known_hosts"
+ssh_key_path: "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ inventory_hostname }}"
+public_keys_path: "./pub_keys/id_rsa_{{ inventory_hostname }}.pub"
+ssh_config_template: "ssh_config.j2"
+root_ssh_config_template: "root_ssh_config.j2"
+ssh_user_config: "/home/{{ ansible_ssh_user }}/.ssh/config"
+root_ssh_config: "/root/.ssh/config"
