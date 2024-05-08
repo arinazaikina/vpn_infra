@@ -1,0 +1,19 @@
+- name: Установка пакета msmtp
+  apt:
+    name: msmtp
+    state: present
+
+- name: Создание файла конфигурации msmtprc
+  ansible.builtin.template:
+    src: "{{ msmtp_config_template }}"
+    dest: "{{ msmtp_config_path }}"
+    mode: '0600'
+
+- name: Проверка отправки тестового письма
+  shell: echo "Привет, это тестовое письмо от msmtp." | msmtp {{ yandex_email }}
+  register: send_email_result
+  ignore_errors: true
+
+- name: Вывод результата отправки письма
+  debug:
+    var: send_email_result.stdout

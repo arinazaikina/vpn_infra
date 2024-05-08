@@ -1,0 +1,14 @@
+defaults
+auth on
+tls on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+
+# Яндекс SMTP сервер
+account yandex
+host smtp.yandex.ru
+port 587
+from "{{ yandex_email }}"
+user "{{ yandex_email }}"
+password "{{ yandex_email_password }}"
+
+account default : yandex
