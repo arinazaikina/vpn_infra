@@ -1,0 +1,2 @@
+prometheus_config_template: prometheus.yml.j2
+prometheus_config_path: /etc/prometheus/prometheus.yml

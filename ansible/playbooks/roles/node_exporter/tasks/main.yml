@@ -1,0 +1,10 @@
+- name: Установка node_exporter
+  apt:
+    name: prometheus-node-exporter
+    state: present
+
+- name: Убедиться, что node_exporter запущен и включен
+  systemd:
+    name: prometheus-node-exporter
+    enabled: yes
+    state: started

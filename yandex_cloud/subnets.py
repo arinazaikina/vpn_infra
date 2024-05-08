@@ -1,4 +1,4 @@
-from client import Client
+from .client import Client
 from vars import FOLDER_ID
 
 

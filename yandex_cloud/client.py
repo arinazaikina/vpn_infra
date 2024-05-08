@@ -4,7 +4,7 @@ import time
 import jwt
 import requests
 
-from endpoints import ApiEndpoints
+from .endpoints import ApiEndpoints
 from vars import AUTHORIZED_KEY_PATH
 
 

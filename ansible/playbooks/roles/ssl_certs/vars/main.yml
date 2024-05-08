@@ -1,0 +1,5 @@
+cert_common_name: "{{ hostvars['monitoring_server']['ansible_host'] }}"
+cert_subject: "/C=US/ST=State/L=City/O=Organization/CN={{ cert_common_name }}"
+cert_days: 365
+cert_key_out: "/etc/ssl/private/{{ cert_common_name }}.key"
+cert_crt_out: "/etc/ssl/certs/{{ cert_common_name }}.crt"

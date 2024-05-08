@@ -3,6 +3,8 @@
   gather_facts: true
   roles:
     - ssh
+    - timezone
+    - disable_ipv6
     - firewall
     - custom_repo
 
@@ -13,6 +15,7 @@
     - role: package_install
       vars:
         package_name: ca
+    - role: node_exporter
 
 - hosts: vpn
   become: true
@@ -24,3 +27,10 @@
     - role: package_install
       vars:
         package_name: vpn
+    - role: node_exporter
+
+- hosts: monitoring
+  become: true
+  gather_facts: true
+  roles:
+    - prometheus

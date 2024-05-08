@@ -1,9 +1,9 @@
 import time
 
-from client import Client
-from images import Images
-from ssh_keys import SSHKeys
-from subnets import Subnets
+from .client import Client
+from .images import Images
+from .ssh_keys import SSHKeys
+from .subnets import Subnets
 from vars import FOLDER_ID, USER
 
 

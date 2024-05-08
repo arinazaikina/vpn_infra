@@ -1,0 +1,17 @@
+- name: Настройка часового пояса
+  become: yes
+  command: timedatectl set-timezone {{ timezone }}
+
+- name: Перезагрузка сервиса времени
+  become: yes
+  systemd:
+    name: systemd-timesyncd.service
+    state: restarted
+
+- name: Проверка текущих настроек времени
+  command: timedatectl
+  register: time_settings
+
+- name: Вывод результатов
+  debug:
+    msg: "{{ time_settings.stdout_lines }}"

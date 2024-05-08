@@ -76,6 +76,13 @@
     destination_port: "{{ grafana_port }}"
     jump: ACCEPT
 
+- name: Разрешение доступа к Node Exporter
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ node_exporter_port }}"
+    jump: ACCEPT
+
 - name: Установка политики DROP для цепочки INPUT таблицы filter
   ansible.builtin.iptables:
     table: filter
