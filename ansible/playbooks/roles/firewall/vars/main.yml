@@ -1,2 +1,0 @@
-iptables_directory: "/etc/iptables"
-iptables_rules_path: "/etc/iptables/rules.v4"

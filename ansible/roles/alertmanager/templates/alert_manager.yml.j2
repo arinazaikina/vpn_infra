@@ -1,0 +1,23 @@
+route:
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 1h
+  receiver: "{{ ansible_ssh_user }}"
+
+receivers:
+- name: "{{ ansible_ssh_user }}"
+  email_configs:
+  - to: "{{ yandex_email }}"
+    from: "{{ yandex_email }}"
+    smarthost: 'smtp.yandex.ru:587'
+    auth_username: "{{ yandex_email }}"
+    auth_identity: "{{ yandex_email }}"
+    auth_password: "{{ yandex_email_password }}"
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'dev', 'instance']

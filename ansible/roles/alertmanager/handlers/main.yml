@@ -1,0 +1,10 @@
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+  become: true
+
+- name: restart prometheus_alertmanager
+  service:
+    name: prometheus_alertmanager
+    state: restarted
+  become: true

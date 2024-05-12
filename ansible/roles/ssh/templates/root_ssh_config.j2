@@ -1,0 +1,10 @@
+Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    PasswordAuthentication no
+    PubkeyAuthentication yes
+
+Host {{ hostvars['ca_server'].ansible_host }}
+    User root
+    IdentityFile /root/.ssh/id_rsa_{{ inventory_hostname }}
+    Port {{ network_ports.ssh }}

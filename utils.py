@@ -7,8 +7,7 @@ import requests
 
 from instances_config import INSTANCES_CONFIG
 from vars import (
-    USER, FOLDER_ID, SSH_PORT, PROMETHEUS_PORT, GRAFANA_PORT, NODE_EXPORTER_PORT,
-    SSH_PRIVATE_KEY_PATH, SSH_PUBLIC_KEY_PATH, YANDEX_EMAIL, YANDEX_EMAIL_PASSWORD
+    USER, FOLDER_ID, SSH_PRIVATE_KEY_PATH, SSH_PUBLIC_KEY_PATH, YANDEX_EMAIL, YANDEX_EMAIL_PASSWORD, MONITORING_PASSWORD
 )
 from yandex_cloud.instances import Instances
 from yandex_cloud.ssh_keys import SSHKeys
@@ -63,28 +62,24 @@ def get_public_ip():
 def write_inventory(ips):
     inventory_path = os.path.join(PROJECT_ROOT, 'ansible', 'inventory')
     os.makedirs(inventory_path, exist_ok=True)
-    hosts_file_path = os.path.join(inventory_path, 'hosts.ini')
+    hosts_file_path = os.path.join(inventory_path, 'hosts')
 
     with open(hosts_file_path, 'w') as f:
         for name, ip in ips.items():
             f.write(f"[{name}]\n")
             f.write(f"{name.lower()}_server ansible_host={ip}\n")
-    print(f"hosts.ini файл создан: {hosts_file_path}")
+    print(f"hosts файл создан: {hosts_file_path}")
 
 
 def run_ansible():
     extra_vars = {
-        'ssh_port': SSH_PORT,
-        'prometheus_port': PROMETHEUS_PORT,
-        'grafana_port': GRAFANA_PORT,
-        'node_exporter_port': NODE_EXPORTER_PORT,
         'ansible_ssh_user': USER,
         'ansible_ssh_private_key_file': SSH_PRIVATE_KEY_PATH,
         'ansible_ssh_public_key_file': SSH_PUBLIC_KEY_PATH,
-        'ansible_ssh_common_args': '-o StrictHostKeyChecking=no -o IdentitiesOnly=yes -o ControlMaster=no',
         'local_host_ip': get_public_ip(),
         'yandex_email': YANDEX_EMAIL,
-        'yandex_email_password': YANDEX_EMAIL_PASSWORD
+        'yandex_email_password': YANDEX_EMAIL_PASSWORD,
+        'monitoring_password': MONITORING_PASSWORD
     }
     extra_vars_string = ' '.join(f"{key}={shlex.quote(str(value))}" for key, value in extra_vars.items())
     playbook_path = os.path.join(PROJECT_ROOT, 'ansible', 'playbooks', 'playbook.yml')

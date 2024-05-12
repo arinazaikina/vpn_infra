@@ -1,0 +1,9 @@
+- name: Сохранение настроек iptables в файл
+  ansible.builtin.shell:
+    cmd: "iptables-save > {{ path_settings.iptables_rules_path }}"
+  become: true
+
+- name: Убедиться, что правила iptables будут сохранены после перезагрузки
+  ansible.builtin.command:
+    cmd: dpkg-reconfigure -f noninteractive iptables-persistent
+  become: true

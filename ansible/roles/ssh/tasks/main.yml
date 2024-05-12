@@ -1,0 +1,79 @@
+- name: Обновление пакетов
+  apt:
+    update_cache: yes
+
+- name: Установка необходимых пакетов для SSH
+  apt:
+    name: openssh-server
+    state: latest
+
+- name: Очистка файла known_hosts
+  known_hosts:
+    path: "{{ user_ssh_settings.known_hosts_path }}"
+    name: "{{ hostvars[item].ansible_host }}"
+    state: absent
+  loop: "{{ groups['all'] }}"
+
+- name: Генерация SSH ключа
+  openssh_keypair:
+    path: "{{ user_ssh_settings.key_path }}"
+    type: rsa
+    size: 4096
+    comment: "{{ inventory_hostname }}"
+    force: true
+  register: ssh_key
+
+- name: Извлечение публичного ключа на управляющий узел
+  fetch:
+    src: "{{ user_ssh_settings.key_path }}.pub"
+    dest: "/tmp/{{ inventory_hostname }}_id_rsa.pub"
+    flat: yes
+
+- name: Копирование публичных ключей в authorized_keys всех хостов
+  authorized_key:
+    user: "{{ ansible_user }}"
+    key: "{{ lookup('file', '/tmp/' + item + '_id_rsa.pub') }}"
+    state: present
+  loop: "{{ ansible_play_hosts }}"
+  when: item != inventory_hostname
+
+- name: Очистка временных файлов публичных ключей на управляющем узле
+  file:
+    path: "/tmp/{{ item }}_id_rsa.pub"
+    state: absent
+  loop: "{{ ansible_play_hosts }}"
+  delegate_to: localhost
+  run_once: true
+  become: false
+
+- name: Установка прав доступа для SSH ключей
+  file:
+    path: "{{ user_ssh_settings.key_path }}"
+    owner: "{{ ansible_ssh_user }}"
+    group: "{{ ansible_ssh_user }}"
+    mode: '0600'
+
+- name: Добавление отпечатков ключей хостов в known_hosts
+  known_hosts:
+    path: "{{ user_ssh_settings.known_hosts_path }}"
+    name: "{{ hostvars[item].ansible_host }}"
+    key: "{{ lookup('pipe', 'ssh-keyscan -t rsa ' + hostvars[item].ansible_host) }}"
+    state: present
+  loop: "{{ groups['all'] }}"
+
+- name: Настройка файла конфигурации SSH для всех узлов
+  ansible.builtin.template:
+    src: "{{ user_ssh_settings.config_template }}"
+    dest: "{{ user_ssh_settings.config }}"
+    owner: "{{ ansible_ssh_user }}"
+    group: "{{ ansible_ssh_user }}"
+    mode: '0644'
+
+- name: Настройка файла конфигурации SSH для root
+  ansible.builtin.template:
+    src: "{{ root_ssh_settings.config_template }}"
+    dest: "{{ root_ssh_settings.config }}"
+    owner: root
+    group: root
+    mode: '0600'
+  become: yes

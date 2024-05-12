@@ -1,0 +1,100 @@
+- name: Установка пакета iptables-persistent
+  ansible.builtin.apt:
+    name: iptables-persistent
+    state: present
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+
+- name: Создание директории конфигураций iptables, если она не существует
+  ansible.builtin.file:
+    path: "{{ path_settings.iptables_directory }}"
+    state: directory
+    mode: '0755'
+
+- name: Очистка цепочек в таблице filter
+  ansible.builtin.iptables:
+    chain: "{{ item }}"
+    flush: yes
+  loop:
+    - INPUT
+    - FORWARD
+    - OUTPUT
+
+- name: Очистка таблицы nat
+  ansible.builtin.iptables:
+    table: nat
+    flush: yes
+
+- name: Очистка таблицы mangle
+  ansible.builtin.iptables:
+    table: mangle
+    flush: yes
+
+- name: Разрешение SSH доступа для текущего хоста
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ network_ports.ssh }}"
+    source: "{{ local_host_ip }}"
+    jump: ACCEPT
+
+- name: Разрешение установленных и связанных соединений
+  ansible.builtin.iptables:
+    chain: INPUT
+    ctstate:
+      - ESTABLISHED
+      - RELATED
+    jump: ACCEPT
+
+- name: Разрешение локального трафика на интерфейсе lo
+  ansible.builtin.iptables:
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+
+- name: Разрешение SSH доступа для всех хостов в инвентаре
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: "{{ network_ports.ssh }}"
+    source: "{{ hostvars[item]['ansible_host'] }}"
+    jump: ACCEPT
+  loop: "{{ groups['all'] }}"
+  when: hostvars[item]['ansible_host'] is defined
+
+- name: Разрешение доступа к Prometheus
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ hostvars['monitoring_server']['ansible_host'] }}"
+    destination_port: "{{ network_ports.prometheus }}"
+    jump: ACCEPT
+
+- name: Разрешение доступа к Grafana
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ hostvars['monitoring_server']['ansible_host'] }}"
+    destination_port: "{{ network_ports.grafana }}"
+    jump: ACCEPT
+
+- name: Установка политики DROP для цепочки INPUT таблицы filter
+  ansible.builtin.iptables:
+    table: filter
+    chain: INPUT
+    policy: DROP
+
+- name: Установка политики DROP для цепочки FORWARD таблицы filter
+  ansible.builtin.iptables:
+    table: filter
+    chain: FORWARD
+    policy: DROP
+
+- name: Установка политики ACCEPT для цепочки OUTPUT таблицы filter
+  ansible.builtin.iptables:
+    table: filter
+    chain: OUTPUT
+    policy: ACCEPT
+
+- name: Сохранение настроек iptables
+  include_tasks: ../includes/iptables_save.yml

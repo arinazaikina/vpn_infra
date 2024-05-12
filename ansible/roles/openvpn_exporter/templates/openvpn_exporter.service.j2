@@ -1,0 +1,16 @@
+[Unit]
+Description=OpenVPN Exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=openvpn_exporter
+Group=openvpn_exporter
+ExecStart=/usr/local/bin/openvpn_exporter \
+  --web.listen-address=:{{ network_ports.openvpn_exporter }} \
+  --web.telemetry-path=/metrics \
+  --status-file=/var/log/openvpn/openvpn-status.log
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

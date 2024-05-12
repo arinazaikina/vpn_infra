@@ -1,0 +1,154 @@
+- name: Создание системной группы node_exporter
+  group:
+    name: node_exporter
+    system: yes
+  become: true
+
+- name: Создание системного пользователя node_exporter
+  user:
+    name: node_exporter
+    group: node_exporter
+    home: /usr/share/node_exporter
+    system: yes
+    createhome: no
+    shell: /bin/false
+  become: true
+
+- name: Скачивание архива Node Exporter
+  get_url:
+    url: "{{ node_exporter_download_url }}"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.{{ node_exporter_arch }}.tar.gz"
+
+- name: Создание целевой директории для Node Exporter
+  file:
+    path: "{{ node_exporter_install_dir }}"
+    state: directory
+    owner: node_exporter
+    group: node_exporter
+    mode: '0755'
+
+- name: Распаковка архива Node Exporter
+  unarchive:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.{{ node_exporter_arch }}.tar.gz"
+    dest: "{{ node_exporter_install_dir }}"
+    creates: "{{ node_exporter_directory }}"
+    remote_src: yes
+  become: yes
+
+- name: Создание символических ссылок на исполняемые файлы
+  file:
+    src: "{{ node_exporter_directory }}/node_exporter"
+    dest: "/usr/bin/node_exporter"
+    state: link
+
+- name: Генерация ключа и CSR для Node Exporter
+  command: "./easyrsa --batch --subject-alt-name=IP:{{ hostvars[inventory_hostname]['ansible_host'] }} gen-req {{ inventory_hostname }}_node_exporter nopass"
+  args:
+    chdir: "{{ ca.easy_rsa_dir }}"
+  delegate_to: ca_server
+
+- name: Подписание сертификата для Node Exporter
+  command: "./easyrsa --batch sign-req server {{ inventory_hostname }}_node_exporter"
+  args:
+    chdir: "{{ ca.easy_rsa_dir }}"
+  delegate_to: ca_server
+
+- name: Извлечение сертификата и ключа Node Exporter на управляющий узел
+  fetch:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    flat: yes
+  loop:
+    - { src: "{{ ca.node_exporter.cert }}", dest: "/tmp/{{ inventory_hostname }}_node_exporter.crt" }
+    - { src: "{{ ca.node_exporter.key }}", dest: "/tmp/{{ inventory_hostname }}_node_exporter.key" }
+  delegate_to: ca_server
+
+- name: Копирование сертификата и ключа Node Exporter на целевую машину
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - { src: "/tmp/{{ inventory_hostname }}_node_exporter.crt", dest: "{{ node_exporter_cert }}" }
+    - { src: "/tmp/{{ inventory_hostname }}_node_exporter.key", dest: "{{ node_exporter_key }}" }
+
+- name: Удаление временных файлов с управляющего узла
+  local_action:
+    module: file
+    path: "/tmp/{{ item }}"
+    state: absent
+  loop:
+    - "{{ inventory_hostname }}_node_exporter.crt"
+    - "{{ inventory_hostname }}_node_exporter.key"
+  become: false
+
+- name: Настройка прав на файлы
+  file:
+    path: "{{ item.path }}"
+    owner: node_exporter
+    group: node_exporter
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ node_exporter_cert }}", mode: '0640' }
+    - { path: "{{ node_exporter_key }}", mode: '0640' }
+    - { path: "/usr/bin/node_exporter", mode: '0755' }
+  become: true
+
+- name: Установка Apache2-Utils
+  apt:
+    name: apache2-utils
+    state: present
+  become: true
+
+- name: Генерация хэша пароля для базовой аутентификации
+  command: htpasswd -nbB {{ ansible_ssh_user }} "{{ monitoring_password }}"
+  register: password_hash
+  changed_when: false
+  become: true
+
+- name: Извлечение хэша пароля
+  set_fact:
+    user_password_hash: "{{ password_hash.stdout.split(':')[1] }}"
+
+- name: Создание файла web.yml для Node Exporter
+  template:
+    src: "{{ node_exporter_web_template }}"
+    dest: "{{ node_exporter_directory }}/web.yml"
+    owner: node_exporter
+    group: node_exporter
+    mode: '0644'
+  become: true
+
+- name: Копирование systemd unit файла
+  template:
+    src: "{{ node_exporter_service_template }}"
+    dest: /etc/systemd/system/node_exporter.service
+  notify:
+    - reload systemd
+    - restart node_exporter
+  become: true
+
+- name: Разрешение доступа серверу мониторинга к Node Exporter
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ hostvars['monitoring_server']['ansible_host'] }}"
+    destination_port: "{{ network_ports.node_exporter }}"
+    jump: ACCEPT
+
+- name: Разрешение доступа управляющему узлу к Node Exporter
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ local_host_ip }}"
+    destination_port: "{{ network_ports.node_exporter }}"
+    jump: ACCEPT
+
+- name: Сохранение настроек iptables
+  include_tasks: ../includes/iptables_save.yml
+
+- name: Включение и запуск сервиса Node Exporter
+  systemd:
+    name: node_exporter
+    enabled: true
+    state: started
+  become: true

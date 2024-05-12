@@ -20,6 +20,7 @@ ln -sf /usr/share/easy-rsa/* "$EASY_RSA_DIR/"
 # Установка прав доступа
 chmod 700 "$EASY_RSA_DIR"
 chown -R "$SUDO_USER":"$SUDO_USER" "$EASY_RSA_DIR"
+chown -R "$SUDO_USER":"$SUDO_USER" "$EASY_RSA_DIR/pki"
 
 # Путь к исходному файлу vars.example
 VARS_EXAMPLE_FILE="$EASY_RSA_DIR/vars.example"

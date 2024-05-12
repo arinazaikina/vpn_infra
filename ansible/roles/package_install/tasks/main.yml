@@ -1,0 +1,13 @@
+- name: Обновление списка пакетов
+  apt:
+    update_cache: yes
+    cache_valid_time: "{{ debian_repo_settings.apt_cache_time }}"
+
+- name: Установка пакета "{{ package_name }}"
+  apt:
+    name: "{{ package_name }}"
+    state: present
+    update_cache: yes
+    allow_unauthenticated: true
+  environment:
+    DEBIAN_FRONTEND: noninteractive

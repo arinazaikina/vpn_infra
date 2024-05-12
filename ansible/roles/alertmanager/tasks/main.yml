@@ -1,0 +1,122 @@
+- name: Создание системной группы prometheus
+  group:
+    name: prometheus
+    system: yes
+  become: true
+
+- name: Создание системного пользователя prometheus
+  user:
+    name: prometheus
+    group: prometheus
+    home: /usr/share/prometheus
+    system: yes
+    createhome: no
+    shell: /bin/false
+  become: true
+
+- name: Скачивание архива AlertManager
+  get_url:
+    url: "{{ alert_manager_download_url }}"
+    dest: "/tmp/prometheus-{{ alert_manager_version }}.{{ alert_manager_arch }}.tar.gz"
+
+- name: Создание целевой директории для Prometheus
+  file:
+    path: "{{ alert_manager_install_dir }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: Распаковка архива AlertManager
+  unarchive:
+    src: "/tmp/prometheus-{{ alert_manager_version }}.{{ alert_manager_arch }}.tar.gz"
+    dest: "{{ alert_manager_install_dir }}"
+    creates: "{{ alert_manager_directory }}"
+    remote_src: yes
+  become: yes
+
+- name: Копирование amtool и alertmanager в /usr/bin
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - { src: "{{ alert_manager_directory }}/amtool", dest: "/usr/bin/amtool" }
+    - { src: "{{ alert_manager_directory }}/alertmanager", dest: "/usr/bin/alertmanager" }
+  become: yes
+
+- name: Создание символических ссылок
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+  loop:
+    - { src: "/usr/bin/amtool", dest: "/usr/local/bin/amtool" }
+    - { src: "/usr/bin/alertmanager", dest: "/usr/local/bin/alertmanager" }
+  become: yes
+
+- name: Создание директории для хранения данных AlertManager
+  file:
+    path: "{{ prometheus_config_dir }}/alertmanager_data"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+  become: yes
+
+- name: Создание файла конфигурации AlertManager
+  template:
+    src: "{{ alert_manager_template }}"
+    dest: "{{ prometheus_config_dir }}/alertmanager.yml"
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  become: true
+
+- name: Создание файла правил AlertManager
+  template:
+    src: "{{ alert_rules_template }}"
+    dest: "{{ prometheus_config_dir }}/rules.yml"
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  become: true
+
+- name: Копирование systemd unit файла
+  template:
+    src: "{{ alert_manager_service_template }}"
+    dest: /etc/systemd/system/prometheus_alertmanager.service
+  notify:
+    - reload systemd
+    - restart prometheus_alertmanager
+  become: true
+
+- name: Включение и запуск сервиса AlertManager
+  systemd:
+    name: prometheus_alertmanager
+    enabled: true
+    state: started
+  become: true
+
+- name: Разрешить доступ к AlertManager для управляющего узла и узла мониторинга
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ item }}"
+    destination_port: "{{ alert_manager_port }}"
+    jump: ACCEPT
+  loop:
+    - "{{ local_host_ip }}"
+    - "{{ hostvars['monitoring_server']['ansible_host'] }}"
+  become: true
+
+- name: Сохранение настроек iptables в файл
+  ansible.builtin.shell:
+    cmd: "iptables-save > {{ iptables_rules_path }}"
+  become: true
+
+- name: Убедиться, что правила iptables будут сохранены после перезагрузки
+  ansible.builtin.command:
+    cmd: dpkg-reconfigure -f noninteractive iptables-persistent

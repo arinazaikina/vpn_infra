@@ -1,0 +1,36 @@
+# Сетевые порты для различных сервисов
+network_ports:
+  ssh: 22
+  prometheus: 9090
+  grafana: 3000
+  node_exporter: 9100
+  openvpn_exporter: 9176
+  alert_manager: 9093
+
+# Общие SSH параметры
+ssh_settings:
+  common_args: "-o StrictHostKeyChecking=no -o IdentitiesOnly=yes -o ControlMaster=no"
+
+# Пути к конфигурациям и сертификатам для CA
+ca:
+  easy_rsa_dir: "/home/{{ ansible_ssh_user }}/easy-rsa"
+#  pki_dir: "/home/{{ ansible_ssh_user }}/easy-rsa/pki"
+#  cert_dir: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/issued"
+#  key_dir: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/private"
+  prometheus:
+    key: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/private/prometheus.key"
+    csr: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/issued/reqs/prometheus.req"
+    cert: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/issued/prometheus.crt"
+  node_exporter:
+    key: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/private/{{ inventory_hostname }}_node_exporter.key"
+    cert: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/issued/{{ inventory_hostname }}_node_exporter.crt"
+
+# Пути к файлам и директориям для IPTABLES и Prometheus
+path_settings:
+  iptables_directory: "/etc/iptables"
+  iptables_rules_path: "/etc/iptables/rules.v4"
+  prometheus_config_dir: "/etc/prometheus"
+
+# Настройки репозитория Debian
+debian_repo_settings:
+  apt_cache_time: 3600

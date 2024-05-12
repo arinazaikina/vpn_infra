@@ -1,0 +1,2 @@
+openvpn_exporter_download_url: "https://github.com/patrickjahns/openvpn_exporter/releases/download/v1.1.2/openvpn_exporter-linux-amd64"
+openvpn_service_template: "openvpn_exporter.service.j2"

@@ -2,6 +2,7 @@
   become: true
   gather_facts: true
   roles:
+    - disable_unattended_upgrades
     - ssh
     - timezone
     - disable_ipv6
@@ -12,10 +13,7 @@
   become: true
   gather_facts: true
   roles:
-    - role: package_install
-      vars:
-        package_name: ca
-    - role: node_exporter
+    - { role: package_install, package_name: ca }
 
 - hosts: vpn
   become: true
@@ -24,10 +22,14 @@
     - vpn_firewall
     - msmtp
     - vpn_configurator
-    - role: package_install
-      vars:
-        package_name: vpn
-    - role: node_exporter
+    - { role: package_install, package_name: vpn }
+    - openvpn_exporter
+
+- hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - node_exporter
 
 - hosts: monitoring
   become: true

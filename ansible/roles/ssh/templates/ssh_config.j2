@@ -1,0 +1,12 @@
+Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+    PasswordAuthentication no
+    PubkeyAuthentication yes
+
+{% for host in groups['all'] | reject('eq', inventory_hostname) | list %}
+Host {{ hostvars[host].ansible_host }}
+    User {{ ansible_ssh_user }}
+    IdentityFile /home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ inventory_hostname }}
+    Port {{ network_ports.ssh }}
+{% endfor %}

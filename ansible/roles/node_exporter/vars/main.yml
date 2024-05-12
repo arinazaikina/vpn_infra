@@ -1,0 +1,18 @@
+# Версия и архитектура Node Exporter
+node_exporter_version: "1.8.0"
+node_exporter_arch: "linux-amd64"
+
+# URL для скачивания
+node_exporter_download_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_arch }}.tar.gz"
+
+# Директории установки
+node_exporter_install_dir: "/opt/node_exporter"
+node_exporter_directory: "{{ node_exporter_install_dir }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_arch }}"
+
+# Шаблоны
+node_exporter_web_template: "web.yml.j2"
+node_exporter_service_template: "node_exporter.service.j2"
+
+# Файлы безопасности
+node_exporter_key: "{{ node_exporter_directory }}/{{ inventory_hostname }}_node_exporter.key"
+node_exporter_cert: "{{ node_exporter_directory }}/{{ inventory_hostname }}_node_exporter.crt"

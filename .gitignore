@@ -115,7 +115,4 @@ dmypy.json
 .DS_Store
 .idea/
 
-ansible/inventory/hosts.ini
-ansible/playbooks/pub_keys/id_rsa_ca_server.pub
-ansible/playbooks/pub_keys/id_rsa_vpn_server.pub
-ansible/playbooks/pub_keys/id_rsa_monitoring_server.pub
+ansible/inventory/hosts

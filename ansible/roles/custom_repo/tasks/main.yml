@@ -1,0 +1,29 @@
+- name: Загрузка GPG-ключа репозитория
+  ansible.builtin.get_url:
+    url: "{{ gpg_key_url }}"
+    dest: "/tmp/repo_key.gpg"
+    mode: '0644'
+  become: true
+
+- name: Деарморирование и сохранение GPG-ключа
+  ansible.builtin.command:
+    cmd: "gpg --dearmor -o {{ gpg_key_path }} /tmp/repo_key.gpg"
+  become: true
+
+- name: Добавление APT репозитория
+  ansible.builtin.apt_repository:
+    repo: "{{ repo_line }}"
+    state: present
+    filename: "{{ repo_file_name }}"
+    mode: '0644'
+
+- name: Обновление списка пакетов
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: "{{ debian_repo_settings.apt_cache_time }}"
+
+- name: Удаление временного файла ключа
+  ansible.builtin.file:
+    path: "/tmp/repo_key.gpg"
+    state: absent
+  become: true

@@ -1,0 +1,11 @@
+# Пути к файлам SSH для текущего пользователя
+user_ssh_settings:
+  known_hosts_path: "/home/{{ ansible_ssh_user }}/.ssh/known_hosts"
+  key_path: "/home/{{ ansible_ssh_user }}/.ssh/id_rsa_{{ inventory_hostname }}"
+  config_template: "ssh_config.j2"
+  config: "/home/{{ ansible_ssh_user }}/.ssh/config"
+
+# Пути к файлам SSH для пользователя root
+root_ssh_settings:
+  config_template: "root_ssh_config.j2"
+  config: "/root/.ssh/config"

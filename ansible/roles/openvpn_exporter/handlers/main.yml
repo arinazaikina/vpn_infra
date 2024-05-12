@@ -1,0 +1,6 @@
+- name: Перезапуск сервиса openvpn_exporter
+  systemd:
+    name: openvpn_exporter
+    state: restarted
+    daemon_reload: yes
+  become: yes

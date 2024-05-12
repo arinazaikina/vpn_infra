@@ -1,0 +1,219 @@
+- name: Создание системной группы prometheus
+  group:
+    name: prometheus
+    system: yes
+  become: true
+
+- name: Создание системного пользователя prometheus
+  user:
+    name: prometheus
+    group: prometheus
+    home: /usr/share/prometheus
+    system: yes
+    createhome: no
+    shell: /bin/false
+  become: true
+
+- name: Скачивание архива Prometheus
+  get_url:
+    url: "{{ prometheus_download_url }}"
+    dest: "/tmp/prometheus-{{ prometheus_version }}.{{ prometheus_arch }}.tar.gz"
+
+- name: Создание целевой директории для Prometheus
+  file:
+    path: "{{ prometheus_install_dir }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: Распаковка архива Prometheus
+  unarchive:
+    src: "/tmp/prometheus-{{ prometheus_version }}.{{ prometheus_arch }}.tar.gz"
+    dest: "{{ prometheus_install_dir }}"
+    creates: "{{ prometheus_directory }}"
+    remote_src: yes
+  become: yes
+
+- name: Создание символических ссылок на исполняемые файлы
+  file:
+    src: "{{ prometheus_directory }}/{{ item.src }}"
+    dest: "/usr/local/bin/{{ item.dest }}"
+    state: link
+  loop:
+    - { src: 'prometheus', dest: 'prometheus' }
+    - { src: 'promtool', dest: 'promtool' }
+
+- name: Создание директорий для конфигураций Prometheus
+  file:
+    path: "{{ item }}"
+    owner: prometheus
+    group: prometheus
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ prometheus_config_dir }}"
+    - "{{ prometheus_data_dir }}"
+    - "{{ prometheus_config_dir }}/consoles"
+    - "{{ prometheus_config_dir }}/console_libraries"
+
+- name: Копирование конфигурационных файлов и библиотек интерфейса
+  copy:
+    src: "{{ prometheus_install_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_arch }}/{{ item.src }}"
+    dest: "{{ item.dest }}"
+    remote_src: true
+  loop:
+    - { src: 'consoles', dest: '{{ prometheus_config_dir }}/consoles' }
+    - { src: 'console_libraries', dest: '{{ prometheus_config_dir }}/console_libraries' }
+
+- name: Генерация ключа и CSR для сервера Prometheus
+  command: "./easyrsa --batch --subject-alt-name=IP:{{ hostvars[inventory_hostname]['ansible_host'] }} gen-req prometheus nopass"
+  args:
+    chdir: "{{ ca_easy_rsa_dir }}"
+  delegate_to: ca_server
+  run_once: true
+
+- name: Подписание сертификата для сервера Prometheus
+  command: "./easyrsa --batch sign-req server prometheus"
+  args:
+    chdir: "{{ ca_easy_rsa_dir }}"
+  delegate_to: ca_server
+  run_once: true
+
+- name: Извлечение сертификата и ключа Prometheus на управляющий узел
+  fetch:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    flat: yes
+  loop:
+    - { src: "{{ ca_prometheus_cert }}", dest: "/tmp/prometheus.crt" }
+    - { src: "{{ ca_prometheus_key }}", dest: "/tmp/prometheus.key" }
+  delegate_to: ca_server
+
+- name: Копирование сертификата и ключа Prometheus на целевую машину
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - { src: "/tmp/prometheus.crt", dest: "{{ prometheus_cert }}" }
+    - { src: "/tmp/prometheus.key", dest: "{{ prometheus_key }}" }
+
+- name: Удаление временных файлов с управляющего узла
+  local_action:
+    module: file
+    path: "/tmp/{{ item }}"
+    state: absent
+  loop:
+    - "prometheus.crt"
+    - "prometheus.key"
+  become: false
+
+- name: Извлечение сертификатов node экспортеров с удостоверяющего центра на управляющий узел
+  fetch:
+    src: "{{ ca_cert_dir }}/{{ item }}_node_exporter.crt"
+    dest: "/tmp/{{ item }}_node_exporter.crt"
+    flat: yes
+  loop: "{{ groups['all'] }}"
+  delegate_to: ca_server
+
+- name: Копирование сертификатов node экспортеров
+  copy:
+    src: "/tmp/{{ item }}_node_exporter.crt"
+    dest: "{{ prometheus_config_dir }}/{{ item }}_node_exporter.crt"
+  loop: "{{ groups['all'] }}"
+
+- name: Удаление сертификатов node экспортеров с управляющего узла
+  local_action:
+    module: file
+    path: "/tmp/{{ item }}_node_exporter.crt"
+    state: absent
+  loop: "{{ groups['all'] }}"
+  become: false
+
+- name: Настройка прав на файлы
+  file:
+    path: "{{ item.path }}"
+    owner: prometheus
+    group: prometheus
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ prometheus_cert }}", mode: '0640' }
+    - { path: "{{ prometheus_key }}", mode: '0640' }
+    - { path: "/usr/local/bin/prometheus", mode: '0755' }
+    - { path: "/usr/local/bin/promtool", mode: '0755' }
+  become: true
+
+- name: Настройка прав на сертификаты node экспортеров
+  file:
+    path: "{{ prometheus_config_dir }}/{{ item }}_node_exporter.crt"
+    owner: prometheus
+    group: prometheus
+    mode: '0640'
+  loop: "{{ groups['all'] }}"
+
+- name: Установка Apache2-Utils
+  apt:
+    name: apache2-utils
+    state: present
+  become: true
+
+- name: Генерация хэша пароля для базовой аутентификации
+  command: htpasswd -nbB {{ ansible_ssh_user }} "{{ monitoring_password }}"
+  register: password_hash
+  changed_when: false
+  become: true
+
+- name: Извлечение хэша пароля
+  set_fact:
+    user_password_hash: "{{ password_hash.stdout.split(':')[1] }}"
+
+- name: Создание файла web.yml для Prometheus
+  template:
+    src: "{{ web_prometheus_template }}"
+    dest: "{{ prometheus_config_dir }}/web.yml"
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  become: true
+
+- name: Создание файла конфигурации Prometheus
+  template:
+    src: "{{ prometheus_template }}"
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  become: true
+
+- name: Копирование systemd unit файла
+  template:
+    src: "{{ prometheus_service_template }}"
+    dest: /etc/systemd/system/prometheus.service
+  notify:
+    - reload systemd
+    - restart prometheus
+  become: true
+
+- name: Включение и запуск сервиса Prometheus
+  systemd:
+    name: prometheus
+    enabled: true
+    state: started
+  become: true
+
+- name: Разрешение доступа управляющему узлу к Prometheus
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ local_host_ip }}"
+    destination_port: "{{ prometheus_port }}"
+    jump: ACCEPT
+
+- name: Сохранение настроек iptables в файл
+  ansible.builtin.shell:
+    cmd: "iptables-save > {{ iptables_rules_path }}"
+  become: true
+
+- name: Убедиться, что правила iptables будут сохранены после перезагрузки
+  ansible.builtin.command:
+    cmd: dpkg-reconfigure -f noninteractive iptables-persistent

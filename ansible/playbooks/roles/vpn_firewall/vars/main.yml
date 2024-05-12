@@ -1,3 +1,0 @@
-vpn_udp_port: 1194
-vpn_client_network: "10.8.0.0/24"
-iptables_rules_path: "/etc/iptables/rules.v4"

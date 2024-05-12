@@ -1,0 +1,18 @@
+- name: Убедиться, что unattended-upgrades установлен (Debian/Ubuntu)
+  apt:
+    name: unattended-upgrades
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Настройка unattended-upgrades
+  template:
+    src: "{{ auto_upgrades_templates }}"
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+  notify: stop unattended-upgrades
+
+- name: Отключение сервиса unattended-upgrades
+  systemd:
+    name: unattended-upgrades
+    enabled: no
+    state: stopped
+  notify: stop unattended-upgrades

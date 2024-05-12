@@ -1,0 +1,18 @@
+[Unit]
+Description=Alertmanager Service
+After=network.target
+
+[Service]
+EnvironmentFile=-/etc/default/alertmanager
+User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/bin/alertmanager $ARGS \
+  --config.file={{ prometheus_config_dir }}/alertmanager.yml \
+  --web.config.file={{ prometheus_config_dir }}/web.yml \
+  --storage.path={{ prometheus_config_dir }}/alertmanager_data
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

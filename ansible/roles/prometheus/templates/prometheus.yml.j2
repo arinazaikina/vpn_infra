@@ -1,0 +1,62 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+  - scheme: https
+    basic_auth:
+      username: {{ ansible_ssh_user }}
+      password: {{ monitoring_password }}
+    tls_config:
+      ca_file: "{{ prometheus_config_dir }}/monitoring_server_node_exporter.crt"
+    static_configs:
+    - targets:  ['{{ hostvars['monitoring_server'].ansible_host }}:{{ prometheus_port }}']
+
+rule_files:
+  - rules.yml
+
+scrape_configs:
+  - job_name: 'prometheus'
+    scheme: https
+    basic_auth:
+      username: {{ ansible_ssh_user }}
+      password: {{ monitoring_password }}
+    tls_config:
+      ca_file: {{ prometheus_cert }}
+    static_configs:
+      - targets: ['{{ hostvars['monitoring_server'].ansible_host }}:{{ prometheus_port }}']
+
+  - job_name: 'node-monitoring'
+    scheme: https
+    basic_auth:
+      username: {{ ansible_ssh_user }}
+      password: {{ monitoring_password }}
+    tls_config:
+      ca_file: "{{ prometheus_config_dir }}/monitoring_server_node_exporter.crt"
+    static_configs:
+      - targets: ['{{ hostvars['monitoring_server'].ansible_host }}:{{ node_exporter_port }}']
+
+  - job_name: 'node-ca'
+    scheme: https
+    basic_auth:
+      username: {{ ansible_ssh_user }}
+      password: {{ monitoring_password }}
+    tls_config:
+      ca_file: "{{ prometheus_config_dir }}/ca_server_node_exporter.crt"
+    static_configs:
+      - targets: ['{{ hostvars['ca_server'].ansible_host }}:{{ node_exporter_port }}']
+
+  - job_name: 'node-vpn'
+    scheme: https
+    basic_auth:
+      username: {{ ansible_ssh_user }}
+      password: {{ monitoring_password }}
+    tls_config:
+      ca_file: "{{ prometheus_config_dir }}/vpn_server_node_exporter.crt"
+    static_configs:
+      - targets: ['{{ hostvars['vpn_server'].ansible_host }}:{{ node_exporter_port }}']
+
+  - job_name: 'openvpn'
+    static_configs:
+      - targets: ['{{ hostvars['vpn_server'].ansible_host }}:{{ openvpn_exporter_port }}']

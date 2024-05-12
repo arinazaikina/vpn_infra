@@ -1,0 +1,68 @@
+- name: Создание системной группы openvpn_exporter
+  group:
+    name: openvpn_exporter
+    system: yes
+  become: true
+
+- name: Создание системного пользователя openvpn_exporter
+  user:
+    name: openvpn_exporter
+    group: openvpn_exporter
+    home: /usr/share/openvpn_exporter
+    system: yes
+    createhome: no
+    shell: /bin/false
+  become: true
+
+- name: Добавление пользователя root в группу openvpn_exporter
+  user:
+    name: root
+    groups: openvpn_exporter
+    append: yes
+
+- name: Скачивание OpenVPN Exporter
+  get_url:
+    url: "{{ openvpn_exporter_download_url }}"
+    dest: "/usr/local/bin/openvpn_exporter"
+    mode: '0755'
+  become: yes
+
+- name: Установка прав владельца и группы для OpenVPN Exporter
+  file:
+    path: "/usr/local/bin/openvpn_exporter"
+    owner: openvpn_exporter
+    group: openvpn_exporter
+    mode: '0755'
+  become: yes
+
+- name: Копирование systemd unit файла для OpenVPN Exporter
+  template:
+    src: "{{ openvpn_service_template }}"
+    dest: /etc/systemd/system/openvpn_exporter.service
+  become: yes
+
+- name: Запуск и включение сервиса OpenVPN Exporter
+  systemd:
+    name: openvpn_exporter
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Разрешение доступа серверу мониторинга к OpenVPN Exporter
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ hostvars['monitoring_server']['ansible_host'] }}"
+    destination_port: "{{ network_ports.openvpn_exporter }}"
+    jump: ACCEPT
+
+- name: Разрешение доступа управляющему узлу к OpenVPN Exporter
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ local_host_ip }}"
+    destination_port: "{{ network_ports.openvpn_exporter }}"
+    jump: ACCEPT
+
+- name: Сохранение настроек iptables
+  include_tasks: ../includes/iptables_save.yml
