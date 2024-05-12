@@ -31,8 +31,8 @@
   roles:
     - node_exporter
 
-- hosts: monitoring
-  become: true
-  gather_facts: true
-  roles:
-    - prometheus
+#- hosts: monitoring
+#  become: true
+#  gather_facts: true
+#  roles:
+#    - prometheus
