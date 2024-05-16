@@ -19,9 +19,22 @@
     url: "{{ prometheus_download_url }}"
     dest: "/tmp/prometheus-{{ prometheus_version }}.{{ prometheus_arch }}.tar.gz"
 
+- name: Скачивание архива AlertManager
+  get_url:
+    url: "{{ alert_manager_download_url }}"
+    dest: "/tmp/prometheus-{{ alert_manager_version }}.{{ alert_manager_arch }}.tar.gz"
+
 - name: Создание целевой директории для Prometheus
   file:
     path: "{{ prometheus_install_dir }}"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+
+- name: Создание целевой директории для AlertManager
+  file:
+    path: "{{ alert_manager_install_dir }}"
     state: directory
     owner: prometheus
     group: prometheus
@@ -35,7 +48,15 @@
     remote_src: yes
   become: yes
 
-- name: Создание символических ссылок на исполняемые файлы
+- name: Распаковка архива AlertManager
+  unarchive:
+    src: "/tmp/prometheus-{{ alert_manager_version }}.{{ alert_manager_arch }}.tar.gz"
+    dest: "{{ alert_manager_install_dir }}"
+    creates: "{{ alert_manager_directory }}"
+    remote_src: yes
+  become: yes
+
+- name: Создание символических ссылок на исполняемые файлы Prometheus
   file:
     src: "{{ prometheus_directory }}/{{ item.src }}"
     dest: "/usr/local/bin/{{ item.dest }}"
@@ -52,10 +73,10 @@
     state: directory
     mode: '0755'
   loop:
-    - "{{ prometheus_config_dir }}"
+    - "{{ path_settings.prometheus_config_dir }}"
     - "{{ prometheus_data_dir }}"
-    - "{{ prometheus_config_dir }}/consoles"
-    - "{{ prometheus_config_dir }}/console_libraries"
+    - "{{ path_settings.prometheus_config_dir }}/consoles"
+    - "{{ path_settings.prometheus_config_dir }}/console_libraries"
 
 - name: Копирование конфигурационных файлов и библиотек интерфейса
   copy:
@@ -63,21 +84,66 @@
     dest: "{{ item.dest }}"
     remote_src: true
   loop:
-    - { src: 'consoles', dest: '{{ prometheus_config_dir }}/consoles' }
-    - { src: 'console_libraries', dest: '{{ prometheus_config_dir }}/console_libraries' }
+    - { src: "consoles", dest: "{{ path_settings.prometheus_config_dir }}/consoles" }
+    - { src: "console_libraries", dest: "{{ path_settings.prometheus_config_dir }}/console_libraries" }
+
+- name: Копирование amtool и alertmanager в /usr/bin
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+    remote_src: true
+  loop:
+    - { src: "{{ alert_manager_directory }}/amtool", dest: "/usr/bin/amtool" }
+    - { src: "{{ alert_manager_directory }}/alertmanager", dest: "/usr/bin/alertmanager" }
+  become: yes
+
+- name: Создание символических ссылок для AlertManager
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: link
+  loop:
+    - { src: "/usr/bin/amtool", dest: "/usr/local/bin/amtool" }
+    - { src: "/usr/bin/alertmanager", dest: "/usr/local/bin/alertmanager" }
+  become: yes
+
+- name: Создание директории для хранения данных AlertManager
+  file:
+    path: "{{ path_settings.prometheus_config_dir }}/alertmanager_data"
+    state: directory
+    owner: prometheus
+    group: prometheus
+    mode: '0755'
+  become: yes
+
+- name: Создание файла конфигурации AlertManager
+  template:
+    src: "{{ alert_manager_template }}"
+    dest: "{{ path_settings.prometheus_config_dir }}/alertmanager.yml"
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  become: true
 
 - name: Генерация ключа и CSR для сервера Prometheus
   command: "./easyrsa --batch --subject-alt-name=IP:{{ hostvars[inventory_hostname]['ansible_host'] }} gen-req prometheus nopass"
   args:
-    chdir: "{{ ca_easy_rsa_dir }}"
+    chdir: "{{ ca.easy_rsa_dir }}"
   delegate_to: ca_server
+  become: true
+  become_user: "{{ ansible_ssh_user }}"
   run_once: true
 
 - name: Подписание сертификата для сервера Prometheus
   command: "./easyrsa --batch sign-req server prometheus"
   args:
-    chdir: "{{ ca_easy_rsa_dir }}"
+    chdir: "{{ ca.easy_rsa_dir }}"
   delegate_to: ca_server
+  become: true
+  become_user: "{{ ansible_ssh_user }}"
   run_once: true
 
 - name: Извлечение сертификата и ключа Prometheus на управляющий узел
@@ -86,8 +152,8 @@
     dest: "{{ item.dest }}"
     flat: yes
   loop:
-    - { src: "{{ ca_prometheus_cert }}", dest: "/tmp/prometheus.crt" }
-    - { src: "{{ ca_prometheus_key }}", dest: "/tmp/prometheus.key" }
+    - { src: "{{ ca.prometheus.cert }}", dest: "/tmp/prometheus.crt" }
+    - { src: "{{ ca.prometheus.key }}", dest: "/tmp/prometheus.key" }
   delegate_to: ca_server
 
 - name: Копирование сертификата и ключа Prometheus на целевую машину
@@ -110,7 +176,7 @@
 
 - name: Извлечение сертификатов node экспортеров с удостоверяющего центра на управляющий узел
   fetch:
-    src: "{{ ca_cert_dir }}/{{ item }}_node_exporter.crt"
+    src: "{{ ca.cert_dir }}/{{ item }}_node_exporter.crt"
     dest: "/tmp/{{ item }}_node_exporter.crt"
     flat: yes
   loop: "{{ groups['all'] }}"
@@ -119,7 +185,7 @@
 - name: Копирование сертификатов node экспортеров
   copy:
     src: "/tmp/{{ item }}_node_exporter.crt"
-    dest: "{{ prometheus_config_dir }}/{{ item }}_node_exporter.crt"
+    dest: "{{ path_settings.prometheus_config_dir }}/{{ item }}_node_exporter.crt"
   loop: "{{ groups['all'] }}"
 
 - name: Удаление сертификатов node экспортеров с управляющего узла
@@ -145,10 +211,10 @@
 
 - name: Настройка прав на сертификаты node экспортеров
   file:
-    path: "{{ prometheus_config_dir }}/{{ item }}_node_exporter.crt"
+    path: "{{ path_settings.prometheus_config_dir }}/{{ item }}_node_exporter.crt"
     owner: prometheus
     group: prometheus
-    mode: '0640'
+    mode: '0644'
   loop: "{{ groups['all'] }}"
 
 - name: Установка Apache2-Utils
@@ -169,8 +235,17 @@
 
 - name: Создание файла web.yml для Prometheus
   template:
-    src: "{{ web_prometheus_template }}"
-    dest: "{{ prometheus_config_dir }}/web.yml"
+    src: "{{ prometheus_web_template }}"
+    dest: "{{ path_settings.prometheus_config_dir }}/web.yml"
+    owner: prometheus
+    group: prometheus
+    mode: '0644'
+  become: true
+
+- name: Создание файла правил AlertManager
+  template:
+    src: "{{ alert_rules_template }}"
+    dest: "{{ path_settings.prometheus_config_dir }}/rules.yml"
     owner: prometheus
     group: prometheus
     mode: '0644'
@@ -179,19 +254,35 @@
 - name: Создание файла конфигурации Prometheus
   template:
     src: "{{ prometheus_template }}"
-    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    dest: "{{ path_settings.prometheus_config_dir }}/prometheus.yml"
     owner: prometheus
     group: prometheus
     mode: '0644'
   become: true
 
-- name: Копирование systemd unit файла
+- name: Копирование systemd unit файла для Prometheus
   template:
     src: "{{ prometheus_service_template }}"
     dest: /etc/systemd/system/prometheus.service
   notify:
     - reload systemd
     - restart prometheus
+  become: true
+
+- name: Копирование systemd unit файла для AlertManager
+  template:
+    src: "{{ alert_manager_service_template }}"
+    dest: /etc/systemd/system/prometheus_alertmanager.service
+  notify:
+    - reload systemd
+    - restart prometheus_alertmanager
+  become: true
+
+- name: Включение и запуск сервиса AlertManager
+  systemd:
+    name: prometheus_alertmanager
+    enabled: true
+    state: started
   become: true
 
 - name: Включение и запуск сервиса Prometheus
@@ -206,14 +297,20 @@
     chain: INPUT
     protocol: tcp
     source: "{{ local_host_ip }}"
-    destination_port: "{{ prometheus_port }}"
+    destination_port: "{{ network_ports.prometheus }}"
     jump: ACCEPT
 
-- name: Сохранение настроек iptables в файл
-  ansible.builtin.shell:
-    cmd: "iptables-save > {{ iptables_rules_path }}"
+- name: Разрешение доступа к AlertManager для управляющего узла и узла мониторинга
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ item }}"
+    destination_port: "{{ network_ports.alert_manager }}"
+    jump: ACCEPT
+  loop:
+    - "{{ local_host_ip }}"
+    - "{{ hostvars['monitoring_server']['ansible_host'] }}"
   become: true
 
-- name: Убедиться, что правила iptables будут сохранены после перезагрузки
-  ansible.builtin.command:
-    cmd: dpkg-reconfigure -f noninteractive iptables-persistent
+- name: Сохранение настроек iptables
+  include_tasks: ../includes/iptables_save.yml

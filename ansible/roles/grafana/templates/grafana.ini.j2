@@ -1,0 +1,5 @@
+[server]
+protocol = https
+domain = {{ hostvars['monitoring_server']['ansible_host'] }}
+cert_file = {{ grafana_config }}/prometheus.crt
+cert_key = {{ grafana_config }}/prometheus.key

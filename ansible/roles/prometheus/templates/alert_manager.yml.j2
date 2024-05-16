@@ -1,0 +1,23 @@
+global:
+  smtp_smarthost: 'smtp.yandex.ru:587'
+  smtp_from: '{{ yandex_email }}'
+  smtp_auth_username: '{{ yandex_email }}'
+  smtp_auth_password: '{{ yandex_email_password }}'
+
+route:
+  group_by: ['alertname']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'email'
+
+receivers:
+- name: 'email'
+  email_configs:
+  - to: '{{ yandex_email }}'
+    send_resolved: true
+    from: '{{ yandex_email }}'
+    smarthost: 'smtp.yandex.ru:587'
+    auth_username: '{{ yandex_email }}'
+    auth_identity: '{{ yandex_email }}'
+    auth_password: '{{ yandex_email_password }}'

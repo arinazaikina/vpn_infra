@@ -31,8 +31,16 @@
   roles:
     - node_exporter
 
-#- hosts: monitoring
-#  become: true
-#  gather_facts: true
-#  roles:
-#    - prometheus
+- hosts: monitoring
+  become: true
+  gather_facts: true
+  roles:
+    - prometheus
+    - grafana
+
+- hosts: backup
+  become: true
+  gather_facts: true
+  roles:
+    - msmtp
+    - backup_script

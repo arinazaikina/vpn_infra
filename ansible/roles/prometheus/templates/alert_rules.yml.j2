@@ -1,0 +1,107 @@
+groups:
+  - name: node_status
+    rules:
+      - alert: HighLoadAverage
+        expr: node_load1 > 0.9
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Высокая загрузка на {{ '{{ $labels.instance }}' }}"
+          description: "Загрузка превышает 0.9 (текущее значение: {{ '{{ $value }}' }})"
+
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|fuse.lxcfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|fuse.lxcfs"} * 100) < 10
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Низкий уровень свободного места на диске {{ '{{ $labels.instance }}' }}"
+          description: "Свободное место меньше 10% на устройстве {{ '{{ $labels.device }}' }} (текущее значение: {{ '{{ $value }}' }}%)"
+
+      - alert: LowMemory
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100) < 10
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Недостаточно оперативной памяти на {{ '{{ $labels.instance }}' }}"
+          description: "Доступная память меньше 10% от общего объема (текущее значение: {{ '{{ $value }}' }}%)"
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Высокая утилизация CPU на {{ '{{ $labels.instance }}' }}"
+          description: "Утилизация CPU превышает 90% (текущее значение: {{ '{{ $value }}' }}%)"
+
+  - name: prometheus_availability
+    rules:
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus недоступен"
+          description: "Prometheus ({{ '{{ $labels.instance }}' }}) не отвечает более 1 минуты."
+
+  - name: node_exporter_availability
+    rules:
+      - alert: NodeExporterDownCA
+        expr: up{job="node-ca"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node Exporter недоступен на сервере CA"
+          description: "Node Exporter на сервере CA не отвечает более 1 минуты."
+
+      - alert: NodeExporterDownMonitoring
+        expr: up{job="node-monitoring"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node Exporter недоступен на сервере мониторинга"
+          description: "Node Exporter на сервере мониторинга не отвечает более 1 минуты."
+
+      - alert: NodeExporterDownVPN
+        expr: up{job="node-vpn"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node Exporter недоступен на VPN сервере"
+          description: "Node Exporter на VPN сервере не отвечает более 1 минуты."
+
+      - alert: NodeExporterDownBackup
+        expr: up{job="node-backup"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node Exporter недоступен на сервере бэкапинга"
+          description: "Node Exporter на сервере бэкапинга не отвечает более 1 минуты."
+
+  - name: openvpn_monitoring
+    rules:
+      - alert: OpenVPNExporterDown
+        expr: openvpn_build_info < 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "OpenVPN экспортер недоступен"
+          description: "Метрика openvpn_build_info показывает недоступность экспортера OpenVPN. Это может свидетельствовать о серьезной проблеме с мониторингом состояния VPN."
+
+      - alert: OpenVPNUnexpectedRestart
+        expr: changes(openvpn_start_time[1h]) > 0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Неожиданный перезапуск OpenVPN экспортера"
+          description: "Зафиксирован изменение времени запуска OpenVPN экспортера, что может указывать на его перезапуск. Это может быть признаком нестабильности сервиса."

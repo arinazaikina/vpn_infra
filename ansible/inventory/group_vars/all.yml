@@ -14,12 +14,9 @@ ssh_settings:
 # Пути к конфигурациям и сертификатам для CA
 ca:
   easy_rsa_dir: "/home/{{ ansible_ssh_user }}/easy-rsa"
-#  pki_dir: "/home/{{ ansible_ssh_user }}/easy-rsa/pki"
-#  cert_dir: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/issued"
-#  key_dir: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/private"
+  cert_dir: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/issued"
   prometheus:
     key: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/private/prometheus.key"
-    csr: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/issued/reqs/prometheus.req"
     cert: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/issued/prometheus.crt"
   node_exporter:
     key: "/home/{{ ansible_ssh_user }}/easy-rsa/pki/private/{{ inventory_hostname }}_node_exporter.key"

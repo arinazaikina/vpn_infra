@@ -1,0 +1,6 @@
+backup_script_template: "backup_script.sh.j2"
+backup_script_dir: "/usr/local/bin/backup_scripts"
+backup_script_path: "{{ backup_script_dir }}/backup_script.sh"
+backup_directory: "/home/{{ ansible_ssh_user }}/backups"
+ca_files_path: "/"
+vpn_files_path: "/"

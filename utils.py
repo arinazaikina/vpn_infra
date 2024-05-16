@@ -9,13 +9,20 @@ from instances_config import INSTANCES_CONFIG
 from vars import (
     USER, FOLDER_ID, SSH_PRIVATE_KEY_PATH, SSH_PUBLIC_KEY_PATH, YANDEX_EMAIL, YANDEX_EMAIL_PASSWORD, MONITORING_PASSWORD
 )
+from yandex_cloud.disks import Disks
 from yandex_cloud.instances import Instances
+from yandex_cloud.snapshot_schedules import SnapshotSchedule
 from yandex_cloud.ssh_keys import SSHKeys
 
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
-def create_instances():
+def create_instances() -> dict:
+    """
+    Создаёт виртуальные машины на основе конфигурации, указанной в INSTANCES_CONFIG.
+    Использует многопоточность для ускорения процесса создания виртуальных машин.
+    :return: Словарь с именами виртуальных машин и их IP-адресами.
+    """
     instance_data = {}
 
     ssh_keys = SSHKeys()
@@ -50,7 +57,33 @@ def create_instances():
     return instance_data
 
 
-def get_public_ip():
+def create_snapshot_schedule(
+        schedule_name: str,
+        description: str,
+        schedule_expression: str = "0 0 */1 * *",
+        max_snapshot_to_keep: int = 10,
+        folder_id: str = FOLDER_ID) -> None:
+    """
+    Создаёт расписание снимков дисков для всех виртуальных машин, определённых в INSTANCES_CONFIG.
+
+    :param schedule_name: Имя для расписания снимков.
+    :param description: Описание расписания снимков.
+    :param schedule_expression: Выражение cron для расписания.
+    :param max_snapshot_to_keep: Максимальное количество хранимых снимков.
+    :param folder_id: Идентификатор папки в Yandex Cloud.
+    """
+    instance_names = [instance.get('name') for instance in INSTANCES_CONFIG]
+    instance_ids = [Instances().get_instance_by_name(name).get('id') for name in instance_names]
+    disk_ids = [Disks().get_disk_id_by_instance_id(instance_id) for instance_id in instance_ids]
+    SnapshotSchedule().setup_snapshot_schedule(
+        schedule_name, description, disk_ids, schedule_expression, max_snapshot_to_keep, folder_id)
+
+
+def get_public_ip() -> str:
+    """
+    Получает публичный IP-адрес машины, на которой выполняется скрипт.
+    :return: Публичный IP-адрес.
+    """
     try:
         response = requests.get('https://api.ipify.org')
         public_ip = response.text
@@ -59,7 +92,11 @@ def get_public_ip():
     return public_ip
 
 
-def write_inventory(ips):
+def write_inventory(ips) -> None:
+    """
+    Записывает файл inventory для Ansible с IP-адресами созданных виртуальных машин.
+    :param ips: Словарь с именами виртуальных машин и их IP-адресами.
+    """
     inventory_path = os.path.join(PROJECT_ROOT, 'ansible', 'inventory')
     os.makedirs(inventory_path, exist_ok=True)
     hosts_file_path = os.path.join(inventory_path, 'hosts')
@@ -68,10 +105,14 @@ def write_inventory(ips):
         for name, ip in ips.items():
             f.write(f"[{name}]\n")
             f.write(f"{name.lower()}_server ansible_host={ip}\n")
-    print(f"hosts файл создан: {hosts_file_path}")
+    print(f"hosts файл: {hosts_file_path}")
 
 
 def run_ansible():
+    """
+    Запускает Ansible playbook, передавая ему необходимые переменные для настройки виртуальных машин.
+    Использует внешние переменные, такие как пользователь, ключи SSH, email и пароль для мониторинга.
+    """
     extra_vars = {
         'ansible_ssh_user': USER,
         'ansible_ssh_private_key_file': SSH_PRIVATE_KEY_PATH,

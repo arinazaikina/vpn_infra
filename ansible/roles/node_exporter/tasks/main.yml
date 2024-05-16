@@ -46,12 +46,16 @@
   args:
     chdir: "{{ ca.easy_rsa_dir }}"
   delegate_to: ca_server
+  become: true
+  become_user: "{{ ansible_ssh_user }}"
 
 - name: Подписание сертификата для Node Exporter
   command: "./easyrsa --batch sign-req server {{ inventory_hostname }}_node_exporter"
   args:
     chdir: "{{ ca.easy_rsa_dir }}"
   delegate_to: ca_server
+  become: true
+  become_user: "{{ ansible_ssh_user }}"
 
 - name: Извлечение сертификата и ключа Node Exporter на управляющий узел
   fetch:

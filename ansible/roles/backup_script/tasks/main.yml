@@ -1,0 +1,43 @@
+- name: Создание директории для бэкапа
+  file:
+    path: "{{ backup_directory }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_ssh_user }}"
+    group: "{{ ansible_ssh_user }}"
+
+- name: Создание директории для скриптов бэкапа
+  file:
+    path: "{{ backup_script_dir }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_ssh_user }}"
+    group: "{{ ansible_ssh_user }}"
+
+- name: Размещение скрипта бэкапирования
+  template:
+    src: "{{ backup_script_template }}"
+    dest: "{{ backup_script_path }}"
+    mode: '0750'
+    owner: "{{ ansible_ssh_user }}"
+    group: "{{ ansible_ssh_user }}"
+
+- name: Создание файла фильтра для rsync
+  copy:
+    dest: "{{ backup_script_dir }}/backup.filter"
+    content: |
+      + /home/***
+      + /etc/***
+      + /opt/***
+      - /*
+    owner: "{{ ansible_ssh_user }}"
+    group: "{{ ansible_ssh_user }}"
+    mode: '0644'
+
+- name: Настройка задания cron для бэкапа каждый день в полночь
+  cron:
+    name: "Запуск скрипта бэкапирования ежедневно в полночь"
+    minute: "0"
+    hour: "0"
+    job: "{{ backup_script_path }} > /dev/null 2>&1"
+    user: "{{ ansible_ssh_user }}"

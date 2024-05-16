@@ -1,0 +1,167 @@
+- name: Скачивание DEB-пакета Grafana
+  get_url:
+    url: "{{ grafana_download_url }}"
+    dest: "/tmp/grafana_8.5.0_amd64.deb"
+
+- name: Установка Grafana
+  apt:
+    deb: "/tmp/grafana_8.5.0_amd64.deb"
+    state: present
+
+- name: Копирование сертификата и ключа Prometheus в директорию Grafana
+  copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    remote_src: true
+  loop:
+    - { src: "{{ prometheus_cert }}", dest: "{{ grafana_config }}" }
+    - { src: "{{ prometheus_key }}", dest: "{{ grafana_config }}" }
+
+- name: Убедиться, что группа grafana существует
+  group:
+    name: grafana
+    state: present
+
+- name: Изменение владельца и прав доступа к сертификату и ключу
+  file:
+    path: "{{ item.path }}"
+    owner: root
+    group: grafana
+    mode: '0640'
+  loop:
+    - { path: "{{ grafana_config }}/prometheus.key" }
+    - { path: "{{ grafana_config }}/prometheus.crt" }
+
+- name: Копирование сертификата Prometheus в системные сертификаты
+  copy:
+    src: "{{ prometheus_cert }}"
+    dest: "/usr/local/share/ca-certificates/prometheus.crt"
+    remote_src: true
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Обновление списка доверенных сертификатов
+  command: update-ca-certificates
+
+- name: Создание grafana.ini
+  template:
+    src: grafana.ini.j2
+    dest: "{{ grafana_config }}/grafana.ini"
+  notify: restart grafana
+
+- name: Создание systemd юнит файла для Grafana
+  template:
+    src: "{{ grafana_service_template }}"
+    dest: /etc/systemd/system/grafana-server.service
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart grafana
+
+- name: Перезагрузить systemd демон
+  systemd:
+    daemon_reload: yes
+
+- name: Перезапустить и включить в автозагрузку службу Grafana
+  systemd:
+    name: grafana-server
+    state: restarted
+    enabled: yes
+
+- name: Разрешение доступа управляющему узлу к Grafana
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    source: "{{ local_host_ip }}"
+    destination_port: "{{ network_ports.grafana }}"
+    jump: ACCEPT
+  become: true
+
+- name: Сохранение настроек iptables
+  include_tasks: ../includes/iptables_save.yml
+
+- name: Пауза на одну минуту перед входом администратора
+  pause:
+    minutes: 1
+
+- name: Вход администратора в Grafana
+  uri:
+    url: "https://{{ hostvars['monitoring_server'].ansible_host }}:{{ network_ports.grafana }}/login"
+    method: POST
+    body_format: json
+    body: '{"user": "admin", "password": "admin"}'
+    headers:
+      Content-Type: "application/json"
+    status_code: 200
+    validate_certs: no
+    return_content: yes
+  register: login_response
+  delegate_to: monitoring_server
+
+- name: Смена пароля администратора Grafana
+  uri:
+    url: "https://{{ hostvars['monitoring_server'].ansible_host }}:{{ network_ports.grafana }}/api/user/password"
+    method: PUT
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+      Cookie: "{{ login_response.set_cookie }}"
+    body:
+      {
+        "oldPassword": "{{ grafana_password }}",
+        "newPassword": "{{ monitoring_password }}",
+        "confirmNew": "{{ monitoring_password }}"
+      }
+    status_code: 200
+    validate_certs: no
+  register: change_password_response
+  delegate_to: monitoring_server
+
+- name: Проверка изменения пароля
+  debug:
+    msg: "Смена пароля {{ change_password_response.json }}"
+
+- name: Получение API-ключа для Grafana
+  uri:
+    url:  "https://{{ hostvars['monitoring_server'].ansible_host }}:{{ network_ports.grafana }}/api/auth/keys"
+    method: POST
+    body_format: json
+    body: '{"name": "ansible-token", "role": "Admin"}'
+    headers:
+      Content-Type: "application/json"
+    user: "{{ grafana_user }}"
+    password: "{{ monitoring_password }}"
+    validate_certs: no
+    force_basic_auth: yes
+    status_code: 200
+  register: grafana_api_key
+  delegate_to: monitoring_server
+
+- name: Настройка Prometheus в качестве источника данных в Grafana
+  uri:
+    url: "https://{{ hostvars['monitoring_server'].ansible_host }}:{{ network_ports.grafana }}/api/datasources"
+    method: POST
+    body_format: json
+    headers:
+      Content-Type: "application/json"
+      Authorization: "Bearer {{ grafana_api_key.json.key  }}"
+    body:
+      name: "Prometheus"
+      type: "prometheus"
+      access: "proxy"
+      url: "https://{{ hostvars['monitoring_server'].ansible_host }}:{{ network_ports.prometheus }}"
+      basicAuth: true
+      basicAuthUser: "{{ ansible_ssh_user }}"
+      basicAuthPassword: ""
+      withCredentials: false
+      isDefault: false
+      jsonData:
+        httpMethod: "POST"
+      secureJsonFields:
+        basicAuthPassword: false
+      secureJsonData:
+        basicAuthPassword: "{{ monitoring_password }}"
+    status_code: 200
+    validate_certs: no
+  delegate_to: monitoring_server

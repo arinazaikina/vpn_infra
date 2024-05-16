@@ -9,9 +9,9 @@ alerting:
       username: {{ ansible_ssh_user }}
       password: {{ monitoring_password }}
     tls_config:
-      ca_file: "{{ prometheus_config_dir }}/monitoring_server_node_exporter.crt"
+      ca_file: {{ prometheus_cert }}
     static_configs:
-    - targets:  ['{{ hostvars['monitoring_server'].ansible_host }}:{{ prometheus_port }}']
+    - targets:  ['{{ hostvars['monitoring_server'].ansible_host }}:{{ network_ports.alert_manager }}']
 
 rule_files:
   - rules.yml
@@ -25,7 +25,7 @@ scrape_configs:
     tls_config:
       ca_file: {{ prometheus_cert }}
     static_configs:
-      - targets: ['{{ hostvars['monitoring_server'].ansible_host }}:{{ prometheus_port }}']
+      - targets: ['{{ hostvars['monitoring_server'].ansible_host }}:{{ network_ports.prometheus }}']
 
   - job_name: 'node-monitoring'
     scheme: https
@@ -33,9 +33,9 @@ scrape_configs:
       username: {{ ansible_ssh_user }}
       password: {{ monitoring_password }}
     tls_config:
-      ca_file: "{{ prometheus_config_dir }}/monitoring_server_node_exporter.crt"
+      ca_file: "{{ path_settings.prometheus_config_dir }}/monitoring_server_node_exporter.crt"
     static_configs:
-      - targets: ['{{ hostvars['monitoring_server'].ansible_host }}:{{ node_exporter_port }}']
+      - targets: ['{{ hostvars['monitoring_server'].ansible_host }}:{{ network_ports.node_exporter }}']
 
   - job_name: 'node-ca'
     scheme: https
@@ -43,9 +43,9 @@ scrape_configs:
       username: {{ ansible_ssh_user }}
       password: {{ monitoring_password }}
     tls_config:
-      ca_file: "{{ prometheus_config_dir }}/ca_server_node_exporter.crt"
+      ca_file: "{{ path_settings.prometheus_config_dir }}/ca_server_node_exporter.crt"
     static_configs:
-      - targets: ['{{ hostvars['ca_server'].ansible_host }}:{{ node_exporter_port }}']
+      - targets: ['{{ hostvars['ca_server'].ansible_host }}:{{ network_ports.node_exporter }}']
 
   - job_name: 'node-vpn'
     scheme: https
@@ -53,10 +53,20 @@ scrape_configs:
       username: {{ ansible_ssh_user }}
       password: {{ monitoring_password }}
     tls_config:
-      ca_file: "{{ prometheus_config_dir }}/vpn_server_node_exporter.crt"
+      ca_file: "{{ path_settings.prometheus_config_dir }}/vpn_server_node_exporter.crt"
     static_configs:
-      - targets: ['{{ hostvars['vpn_server'].ansible_host }}:{{ node_exporter_port }}']
+      - targets: ['{{ hostvars['vpn_server'].ansible_host }}:{{ network_ports.node_exporter }}']
+
+  - job_name: 'node-backup'
+    scheme: https
+    basic_auth:
+      username: {{ ansible_ssh_user }}
+      password: {{ monitoring_password }}
+    tls_config:
+      ca_file: "{{ path_settings.prometheus_config_dir }}/backup_server_node_exporter.crt"
+    static_configs:
+      - targets: ['{{ hostvars['backup_server'].ansible_host }}:{{ network_ports.node_exporter }}']
 
   - job_name: 'openvpn'
     static_configs:
-      - targets: ['{{ hostvars['vpn_server'].ansible_host }}:{{ openvpn_exporter_port }}']
+      - targets: ['{{ hostvars['vpn_server'].ansible_host }}:{{ network_ports.openvpn_exporter }}']

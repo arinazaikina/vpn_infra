@@ -8,11 +8,11 @@ User=prometheus
 Group=prometheus
 Type=simple
 ExecStart=/usr/local/bin/prometheus \
-  --config.file={{ prometheus_config_dir }}/prometheus.yml \
+  --config.file={{ path_settings.prometheus_config_dir }}/prometheus.yml \
   --storage.tsdb.path=/var/lib/prometheus/ \
-  --web.console.templates={{ prometheus_config_dir }}/consoles \
-  --web.console.libraries={{ prometheus_config_dir }}/console_libraries \
-  --web.config.file={{ prometheus_config_dir }}/web.yml
+  --web.console.templates={{ path_settings.prometheus_config_dir }}/consoles \
+  --web.console.libraries={{ path_settings.prometheus_config_dir }}/console_libraries \
+  --web.config.file={{ path_settings.prometheus_config_dir }}/web.yml
 
 [Install]
 WantedBy=multi-user.target

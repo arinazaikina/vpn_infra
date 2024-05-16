@@ -8,3 +8,9 @@
     name: prometheus
     state: restarted
   become: true
+
+- name: restart prometheus_alertmanager
+  service:
+    name: prometheus_alertmanager
+    state: restarted
+  become: true

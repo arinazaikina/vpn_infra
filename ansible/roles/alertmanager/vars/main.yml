@@ -1,8 +1,0 @@
-alert_manager_version: "0.27.0"
-alert_manager_arch: "linux-amd64"
-alert_manager_download_url: "https://github.com/prometheus/alertmanager/releases/download/v{{ alert_manager_version }}/alert_manager-{{ alert_manager_version }}.{{ alert_manager_arch }}.tar.gz"
-alert_manager_install_dir: "/opt/alert_manager"
-alert_manager_directory: "{{ alert_manager_install_dir }}/prometheus-{{ alert_manager_version }}.{{ alert_manager_arch }}"
-alert_manager_template: "alert_manager.yml.j2"
-alert_manager_service_template: "prometheus_alertmanager.service.j2"
-alert_rules_template: "alert_rules.yml.j2"

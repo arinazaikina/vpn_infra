@@ -1,2 +1,2 @@
 msmtp_config_template: "msmtprc.j2"
-msmtp_config_path: "~/.msmtprc"
+msmtp_config_path: "/etc/msmtprc"

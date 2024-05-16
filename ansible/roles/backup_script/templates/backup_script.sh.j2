@@ -1,0 +1,48 @@
+#!/bin/bash
+# Дата и время для создания уникальной папки бэкапа
+DATE=$(date +%Y%m%d-%H%M%S)
+
+# Директории для бэкапа каждого сервера
+mkdir -p {{ backup_directory }}/ca/$DATE
+mkdir -p {{ backup_directory }}/vpn/$DATE
+
+# Запуск бэкапа выбранных директорий с сервера CA в фоновом режиме
+rsync -avz --delete --filter='merge {{ backup_script_dir }}/backup.filter' \
+  {{ ansible_ssh_user }}@{{ hostvars['ca_server'].ansible_host }}:/ \
+  {{ backup_directory }}/ca/$DATE/ &
+
+# Запуск бэкапа выбранных директорий с сервера VPN в фоновом режиме
+rsync -avz --delete --filter='merge {{ backup_script_dir }}/backup.filter' \
+  {{ ansible_ssh_user }}@{{ hostvars['vpn_server'].ansible_host }}:/ \
+  {{ backup_directory }}/vpn/$DATE/ &
+
+# Ожидание завершения обоих бэкапов
+wait
+
+echo "Бэкапы серверов CA и VPN завершены $(date)" >> {{ backup_directory }}/backup.log
+
+# Очистка старых бэкапов, старше 7 дней
+find {{ backup_directory }}/ca/ -mindepth 1 -maxdepth 1 -type d -mtime +7 -exec rm -rf {} \;
+find {{ backup_directory }}/vpn/ -mindepth 1 -maxdepth 1 -type d -mtime +7 -exec rm -rf {} \;
+
+# Подготовка и отправка уведомительного письма
+SUBJECT="Уведомление о бэкапе: Бэкапы серверов CA и VPN завершены"
+BODY="Бэкапы серверов CA и VPN успешно завершены $(date). Проверьте лог файл для деталей."
+
+echo "From: {{ yandex_email }}
+To: {{ yandex_email }}
+Subject: $SUBJECT
+
+$BODY" > /tmp/email.txt
+
+# Отправка письма
+if ! msmtp -a default "{{ yandex_email }}" < /tmp/email.txt; then
+    echo "Ошибка при отправке уведомления о бэкапе"
+    rm /tmp/email.txt
+    exit 1
+else
+    echo "Уведомление о бэкапе успешно отправлено на {{ yandex_email }}"
+fi
+
+# Удаление временного файла
+rm /tmp/email.txt

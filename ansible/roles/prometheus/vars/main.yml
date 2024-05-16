@@ -1,11 +1,30 @@
+# Версия и архитектура Prometheus
 prometheus_version: "2.52.0"
 prometheus_arch: "linux-amd64"
-prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v2.52.0/prometheus-{{ prometheus_version }}.{{ prometheus_arch }}.tar.gz"
+
+# Версия и архитектура AlertManager
+alert_manager_version: "0.27.0"
+alert_manager_arch: "linux-amd64"
+
+# URL для скачивания
+prometheus_download_url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.{{ prometheus_arch }}.tar.gz"
+alert_manager_download_url: "https://github.com/prometheus/alertmanager/releases/download/v{{ alert_manager_version }}/alertmanager-{{ alert_manager_version}}.{{ alert_manager_arch }}.tar.gz"
+
+# Директории установки
 prometheus_install_dir: "/opt/prometheus"
 prometheus_directory: "{{ prometheus_install_dir }}/prometheus-{{ prometheus_version }}.{{ prometheus_arch }}"
 prometheus_data_dir: "/var/lib/prometheus"
-web_prometheus_template: "web.yml.j2"
+alert_manager_install_dir: "/opt/alert_manager"
+alert_manager_directory: "{{ alert_manager_install_dir }}/alertmanager-{{ alert_manager_version }}.{{ alert_manager_arch }}"
+
+# Шаблоны
+prometheus_web_template: "web.yml.j2"
 prometheus_template: "prometheus.yml.j2"
 prometheus_service_template: "prometheus.service.j2"
-prometheus_key: "{{ prometheus_config_dir }}/prometheus.key"
-prometheus_cert: "{{ prometheus_config_dir }}/prometheus.crt"
+alert_manager_template: "alert_manager.yml.j2"
+alert_manager_service_template: "prometheus_alertmanager.service.j2"
+alert_rules_template: "alert_rules.yml.j2"
+
+# Файлы безопасности
+prometheus_key: "{{ path_settings.prometheus_config_dir }}/prometheus.key"
+prometheus_cert: "{{ path_settings.prometheus_config_dir }}/prometheus.crt"
