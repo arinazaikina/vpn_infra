@@ -138,3 +138,11 @@ sudo make_config имя_пользователя_для_которого_пре�
 
 - https://<IP_машины_monitoring>:3000
 - Авторизация: admin; пароль MONITORING_PASSWORD, задаваемый в файле `.env`
+
+## Демонстрация разворачивания инфраструктуры VPN
+
+https://drive.google.com/file/d/1y0BsLSllTakxPqKMs6dMDaDXvqYwJzpD/view?usp=sharing
+
+## Демонстрация сборки и доставки DEB-пакетов
+
+https://drive.google.com/file/d/1U0x_Oce8559ASzFUu0fdarOqQwNp__4T/view?usp=sharing
